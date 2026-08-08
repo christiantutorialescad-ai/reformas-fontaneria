@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gestión de Reformas & Facturas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --az:#1565C0;--na:#FF6F00;--ro:#C62828;--ve:#2E7D32;
+  --fondo:#F5F5F5;--card:#fff;--gris:#757575;--grisc:#E0E0E0;
+  --texto:#212121;--texto2:#616161;--r:12px;
+}
+html,body{height:100%;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--fondo);color:var(--texto);font-size:16px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.oculto{display:none!important}
+/* PANTALLA LOGIN */
+.login-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--az);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px}
+.login-box{background:#fff;border-radius:var(--r);padding:28px 24px;width:100%;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.3);text-align:center}
+.login-box h2{color:var(--az);font-size:20px;margin-bottom:6px}
+.login-box p{color:var(--texto2);font-size:13px;margin-bottom:20px}
+/* CABECERA */
+.cab{background:var(--az);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.2);min-height:56px}
+.cab h1{font-size:18px;font-weight:600;flex:1}
+.cbtn{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:8px;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.cbtn:active{background:rgba(255,255,255,.2)}
+/* CONTENIDO */
+.main{padding:12px;max-width:800px;margin:0 auto;padding-bottom:80px}
+/* TARJETA */
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+/* BOTONES */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;touch-action:manipulation;min-height:44px;min-width:44px;-webkit-appearance:none}
+.btn:active{transform:scale(.97)}
+.baz{background:var(--az);color:#fff}
+.bna{background:var(--na);color:#fff}
+.bro{background:var(--ro);color:#fff}
+.bor{background:transparent;border:2px solid var(--az);color:var(--az)}
+.bsm{padding:6px 12px;font-size:13px;min-height:36px}
+.bgrp{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+/* FORMULARIOS */
+.grp{margin-bottom:12px;text-align:left}
+.grp label{display:block;font-size:13px;color:var(--texto2);margin-bottom:4px;font-weight:500}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--grisc);border-radius:8px;font-size:16px;font-family:inherit;background:#fff;color:var(--texto);-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--az)}
+textarea{resize:vertical;min-height:60px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* LISTAS Y TARJETAS */
+.pcard{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--card);border-radius:var(--r);box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:8px;cursor:pointer;touch-action:manipulation}
+.pcard:active{background:#f0f0f0}
+.pcard h3{font-size:16px;margin-bottom:2px}
+.pcard small{color:var(--texto2);font-size:13px}
+.ptot{font-weight:600;font-size:16px;color:var(--az)}
+
+/* NUEVA ESTRUCTURA DE PARTIDAS (EN 2 FILAS LIMPIAS) */
+.item-card{background:#fafafa;border:1px solid var(--grisc);border-radius:8px;padding:12px;margin-bottom:8px}
+.item-top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.item-desc-row{margin-bottom:8px}
+.item-bottom-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center}
+.icat-banner{font-weight:600;color:var(--az);background:#e3f2fd;border-radius:6px;padding:6px 10px;margin-top:12px;margin-bottom:6px}
+.idel{color:var(--ro);font-size:20px;cursor:pointer;background:none;border:none;padding:2px;min-width:30px;touch-action:manipulation}
+
+/* RESUMEN */
+.sr{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;border-bottom:1px solid var(--grisc)}
+.sr:last-child{border:none}
+.stot{font-size:19px;font-weight:700;color:var(--az);border-top:2px solid var(--az)!important;padding-top:12px!important;margin-top:4px}
+/* PAGINACION */
+.paginacion{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;padding:8px 0}
+.paginacion span{font-size:14px;color:var(--texto2);font-weight:500}
+/* PREVISUALIZACION LOGO */
+.logo-prev-box{display:flex;align-items:center;gap:12px;margin-top:8px}
+.logo-prev-img{max-height:60px;max-width:120px;object-fit:contain;border:1px solid var(--grisc);border-radius:6px;padding:4px}
+/* MENU LATERAL */
+.mov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200}
+.smenu{position:fixed;top:0;left:0;bottom:0;width:280px;background:#fff;z-index:201;padding:16px;box-shadow:2px 0 12px rgba(0,0,0,.2);overflow-y:auto}
+.smenu h2{font-size:18px;margin-bottom:16px;color:var(--az)}
+.mi{display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;cursor:pointer;font-size:15px;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.mi:active{background:#e3f2fd}
+/* MODAL CLIENTE */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:210;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-body{background:#fff;border-radius:var(--r);padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+/* FAB */
+.fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--na);color:#fff;border:none;font-size:30px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:50;touch-action:manipulation;-webkit-appearance:none}
+.fab:active{transform:scale(.9)}
+.bwa{background:#25D366;color:#fff}
+.bwa:active{background:#1EBE5D}
+
+/* BADGES DE ESTADO */
+.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+.badge-borrador{background:#e0e0e0;color:#424242}
+.badge-enviado{background:#e3f2fd;color:#1565c0}
+.badge-aprobado{background:#e8f5e9;color:#2e7d32}
+.badge-rechazado{background:#ffebee;color:#c62828}
+.badge-pendiente{background:#fff3e0;color:#e65100}
+.badge-cobrada{background:#e8f5e9;color:#2e7d32}
+.badge-anulada{background:#efebe9;color:#4e342e}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA LOGIN DE ACCESO -->
+<div id="panelLogin" class="login-screen">
+  <div class="login-box">
+    <h2>Gestión de Reformas & Facturas</h2>
+    <p>Introduce las credenciales para acceder</p>
+    <div class="grp">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="Usuario">
+    </div>
+    <div class="grp">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="Contraseña">
+    </div>
+    <div id="loginErr" style="color:var(--ro);font-size:13px;margin-bottom:12px" class="oculto">Usuario o contraseña incorrectos</div>
+    <button class="btn baz" id="btnLoginEntrar" style="width:100%;margin-top:8px">Entrar</button>
+  </div>
+</div>
+
+<!-- CABECERA -->
+<div class="cab">
+  <button class="cbtn oculto" id="btnVolver">&#8592;</button>
+  <h1 id="titulo">Gestión de Reformas & Facturas</h1>
+  <button class="cbtn" id="btnMenu">&#9776;</button>
+</div>
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="main">
+
+  <!-- Diagnostico de errores -->
+  <div id="errDiag"></div>
+
+  <!-- PANTALLA: Dashboard Principal -->
+  <div id="panelDashboard">
+
+    <!-- 3 BOTONES PRINCIPALES DE ACCION RAPIDA -->
+    <div class="card" style="background:#fff; border-radius:12px; padding:18px 14px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <h2 style="font-size:16px; margin-bottom:14px; font-weight:600; color:var(--texto)">¿Qué deseas realizar hoy?</h2>
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+        <button class="btn" id="btnDashNuevoPresupuesto" style="background:#FF6F00; color:#fff; flex-direction:column; gap:6px; padding:14px 6px; font-size:12px; font-weight:600; border-radius:10px; border:none; box-shadow:0 3px 6px rgba(255,111,0,0.25); min-height:76px; width:100%">
+          <span style="font-size:24px">📋</span>
+          <span>Crear Presupuesto</span>
+        </button>
+        <button class="btn" id="btnDashNuevaFactura" style="background:#2E7D32; color:#fff; flex-direction:column; gap:6px; padding:14px 6px; font-size:12px; font-weight:600; border-radius:10px; border:none; box-shadow:0 3px 6px rgba(46,125,50,0.25); min-height:76px; width:100%">
+          <span style="font-size:24px">📑</span>
+          <span>Crear Factura</span>
+        </button>
+        <button class="btn" id="btnDashNuevoCliente" style="background:#1565C0; color:#fff; flex-direction:column; gap:6px; padding:14px 6px; font-size:12px; font-weight:600; border-radius:10px; border:none; box-shadow:0 3px 6px rgba(21,101,192,0.25); min-height:76px; width:100%">
+          <span style="font-size:24px">👤</span>
+          <span>Crear Cliente</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- RESUMEN / METRICAS RAPIDAS -->
+    <div class="r3" style="margin-bottom:12px;">
+      <div class="card" id="cardDashPresupuestos" style="text-align:center; padding:12px; margin:0; cursor:pointer">
+        <small style="color:var(--texto2); font-weight:500">Presupuestos</small>
+        <h3 id="dashNumPresupuestos" style="font-size:22px; color:var(--az); margin-top:2px">0</h3>
+      </div>
+      <div class="card" id="cardDashFacturas" style="text-align:center; padding:12px; margin:0; cursor:pointer">
+        <small style="color:var(--texto2); font-weight:500">Facturas</small>
+        <h3 id="dashNumFacturas" style="font-size:22px; color:var(--ve); margin-top:2px">0</h3>
+      </div>
+      <div class="card" id="cardDashClientes" style="text-align:center; padding:12px; margin:0; cursor:pointer">
+        <small style="color:var(--texto2); font-weight:500">Clientes</small>
+        <h3 id="dashNumClientes" style="font-size:22px; color:var(--na); margin-top:2px">0</h3>
+      </div>
+    </div>
+
+    <!-- ACCESOS A LISTAS COMPLETAS -->
+    <div class="card">
+      <h3 style="font-size:15px; margin-bottom:10px">Acceso a Listados</h3>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn bor" id="btnIrPresupuestosLista" style="justify-content:space-between; width:100%">
+          <span>📋 Ver Lista de Presupuestos</span>
+          <span>&rarr;</span>
+        </button>
+        <button class="btn bor" id="btnIrFacturasLista" style="justify-content:space-between; width:100%">
+          <span>📑 Ver Lista de Facturas</span>
+          <span>&rarr;</span>
+        </button>
+        <button class="btn bor" id="btnIrClientesLista" style="justify-content:space-between; width:100%">
+          <span>👤 Ver Lista de Clientes</span>
+          <span>&rarr;</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PANTALLA: Lista de presupuestos -->
+  <div id="panelLista" class="oculto">
+    <div style="margin-bottom:12px">
+      <input type="text" id="buscar" placeholder="Buscar presupuesto por nombre o cliente...">
+    </div>
+    <div id="lista"></div>
+    <div id="pagPresupuestos" class="paginacion oculto"></div>
+    <button class="fab" id="btnNuevo">+</button>
+  </div>
+
+  <!-- PANTALLA: Editor de presupuesto -->
+  <div id="panelEdit" class="oculto">
+
+    <!-- Info empresa -->
+    <div id="boxEmpresa" class="card oculto" style="background:var(--az);color:#fff"></div>
+
+    <div class="card">
+      <div class="grp">
+        <label>Nombre del presupuesto</label>
+        <input type="text" id="fNombre" placeholder="Ej: Reforma cocina">
+      </div>
+      <div class="r2">
+        <div class="grp">
+          <label>Cliente</label>
+          <div style="display:flex;gap:4px">
+            <select id="fClienteSelect" style="flex:1">
+              <option value="">-- Seleccionar cliente --</option>
+            </select>
+            <button class="btn bor bsm" id="btnNuevoClienteRapido" type="button">+</button>
+          </div>
+        </div>
+        <div class="grp">
+          <label>Fecha</label>
+          <input type="date" id="fFecha">
+        </div>
+      </div>
+      <div class="r2" style="margin-top:8px">
+        <div class="grp">
+          <label>Estado del Presupuesto</label>
+          <select id="fEstado">
+            <option value="borrador">📝 Borrador</option>
+            <option value="enviado">📤 Enviado</option>
+            <option value="aprobado">✅ Aprobado</option>
+            <option value="rechazado">❌ Rechazado</option>
+          </select>
+        </div>
+        <div class="grp">
+          <label>IVA del Presupuesto</label>
+          <select id="fIvaDefecto">
+            <option value="21">21% IVA General (Normal)</option>
+            <option value="10">10% IVA Reducido (Comunidades / Reforma)</option>
+            <option value="4">4% IVA Superreducido</option>
+            <option value="0">0% Exento de IVA</option>
+          </select>
+        </div>
+      </div>
+      <div id="infoClienteSel" class="oculto" style="margin-top:8px;padding:8px;background:#e3f2fd;border-radius:6px;font-size:13px;color:var(--az)"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">Partidas</h3>
+      <div id="itemsDiv"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">Resumen</h3>
+      <div class="sr"><span>Subtotal</span><span id="rSub">0,00 &#8364;</span></div>
+      <div class="sr oculto" id="rDtoFila"><span>Descuento</span><span id="rDto">0,00 &#8364;</span></div>
+      <div id="desgloseIvaContainer"></div>
+      <div class="sr stot"><span>TOTAL</span><span id="rTot">0,00 &#8364;</span></div>
+    </div>
+
+    <div class="card">
+      <div class="r2">
+        <div class="grp">
+          <label>Dto. tipo</label>
+          <select id="fDtoT">
+            <option value="percent">%</option>
+            <option value="fixed">&#8364; Fijo</option>
+          </select>
+        </div>
+        <div class="grp">
+          <label>Descuento global</label>
+          <input type="number" id="fDtoV" value="0" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="grp">
+        <label>Notas</label>
+        <textarea id="fNotas" placeholder="Notas adicionales..."></textarea>
+      </div>
+    </div>
+
+    <div class="bgrp">
+      <button class="btn baz" id="btnGuardar">&#128190; Guardar</button>
+      <button class="btn bna" id="btnPDF">&#128196; PDF</button>
+      <button class="btn bwa" id="btnWhatsApp">&#128241; WhatsApp</button>
+      <button class="btn baz oculto" id="btnConvertirFactura" style="background:#2E7D32">&#128195; Convertir a Factura</button>
+      <button class="btn bor" id="btnPlantilla">&#128203; Plantilla</button>
+      <button class="btn bro bsm oculto" id="btnBorrar">Eliminar</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA: Lista de Facturas -->
+  <div id="panelFacturas" class="oculto">
+    <div style="margin-bottom:12px">
+      <input type="text" id="buscarFactura" placeholder="Buscar factura por número, concepto o cliente...">
+    </div>
+    <div id="listaFacturas"></div>
+    <div id="pagFacturas" class="paginacion oculto"></div>
+    <button class="fab" id="btnNuevaFactura">+</button>
+  </div>
+
+  <!-- PANTALLA: Editor de Factura -->
+  <div id="panelEditFactura" class="oculto">
+    <div class="card">
+      <div class="r2">
+        <div class="grp">
+          <label>Nº Factura *</label>
+          <input type="text" id="fFactNum" placeholder="Ej: F-2026-001">
+        </div>
+        <div class="grp">
+          <label>Estado Cobro</label>
+          <select id="fFactEstado">
+            <option value="pendiente">⏳ Pendiente</option>
+            <option value="cobrada">✅ Cobrada</option>
+            <option value="anulada">🚫 Anulada</option>
+          </select>
+        </div>
+      </div>
+      <div class="r2">
+        <div class="grp">
+          <label>Cliente *</label>
+          <div style="display:flex;gap:4px">
+            <select id="fFactClienteSelect" style="flex:1">
+              <option value="">-- Seleccionar cliente --</option>
+            </select>
+          </div>
+        </div>
+        <div class="grp">
+          <label>Forma de Pago</label>
+          <select id="fFactFormaPago">
+            <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+            <option value="Bizum">Bizum</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+          </select>
+        </div>
+      </div>
+      <div class="r2">
+        <div class="grp">
+          <label>Fecha Emisión</label>
+          <input type="date" id="fFactFecha">
+        </div>
+        <div class="grp">
+          <label>Fecha Vencimiento</label>
+          <input type="date" id="fFactVenc">
+        </div>
+      </div>
+      <div class="grp" style="margin-top:8px">
+        <label>IVA de la Factura</label>
+        <select id="fFactIvaDefecto">
+          <option value="21">21% IVA General (Normal)</option>
+          <option value="10">10% IVA Reducido (Comunidades / Reforma)</option>
+          <option value="4">4% IVA Superreducido</option>
+          <option value="0">0% Exento de IVA</option>
+        </select>
+      </div>
+      <div id="infoFactClienteSel" class="oculto" style="margin-top:8px;padding:8px;background:#e3f2fd;border-radius:6px;font-size:13px;color:var(--az)"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">Partidas / Conceptos</h3>
+      <div id="factItemsDiv"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">Resumen Factura</h3>
+      <div class="sr"><span>Subtotal</span><span id="rFactSub">0,00 &#8364;</span></div>
+      <div class="sr oculto" id="rFactDtoFila"><span>Descuento</span><span id="rFactDto">0,00 &#8364;</span></div>
+      <div id="factDesgloseIvaContainer"></div>
+      <div class="sr stot"><span>TOTAL FACTURA</span><span id="rFactTot">0,00 &#8364;</span></div>
+    </div>
+
+    <div class="card">
+      <div class="r2">
+        <div class="grp">
+          <label>Dto. tipo</label>
+          <select id="fFactDtoT">
+            <option value="percent">%</option>
+            <option value="fixed">&#8364; Fijo</option>
+          </select>
+        </div>
+        <div class="grp">
+          <label>Descuento global</label>
+          <input type="number" id="fFactDtoV" value="0" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="grp">
+        <label>Notas / Instrucciones de Pago</label>
+        <textarea id="fFactNotas" placeholder="Instrucciones de cobro, IBAN o Bizum..."></textarea>
+      </div>
+    </div>
+
+    <div class="bgrp">
+      <button class="btn baz" id="btnGuardarFactura">&#128190; Guardar Factura</button>
+      <button class="btn bna" id="btnPDFFactura">&#128196; PDF Factura</button>
+      <button class="btn bwa" id="btnWAFactura">&#128241; WhatsApp</button>
+      <button class="btn bro bsm oculto" id="btnBorrarFactura">Eliminar</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA: Clientes -->
+  <div id="panelClientes" class="oculto">
+    <div style="margin-bottom:12px">
+      <input type="text" id="buscarCliente" placeholder="Buscar cliente por nombre, NIF, tel...">
+    </div>
+    <div id="listaClientes"></div>
+    <div id="pagClientes" class="paginacion oculto"></div>
+    <button class="fab" id="btnNuevoCliente">+</button>
+  </div>
+
+  <!-- PANTALLA: Plantillas -->
+  <div id="panelPlantillas" class="oculto">
+    <div id="listaPlantillas"></div>
+    <div id="pagPlantillas" class="paginacion oculto"></div>
+  </div>
+
+  <!-- PANTALLA: Configuracion empresa -->
+  <div id="panelConfig" class="oculto">
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:12px">Tu empresa</h3>
+      <div class="grp"><label>Nombre empresa</label><input type="text" id="cNombre"></div>
+      <div class="grp"><label>NIF / CIF</label><input type="text" id="cNif"></div>
+      <div class="grp"><label>Direccion</label><input type="text" id="cDir"></div>
+      <div class="grp"><label>Telefono</label><input type="tel" id="cTel"></div>
+      <div class="grp"><label>Email</label><input type="email" id="cEmail"></div>
+      <div class="grp"><label>Cuenta Bancaria (IBAN)</label><input type="text" id="cIban" placeholder="ES00 0000 0000 0000 0000 0000"></div>
+      <div class="grp"><label>Teléfono Bizum</label><input type="tel" id="cBizum" placeholder="600000000"></div>
+      
+      <!-- LOGO EMPRESA -->
+      <div class="grp">
+        <label>Logo de la empresa (imagen)</label>
+        <input type="file" id="cLogoFile" accept="image/*">
+        <div id="cLogoPrevBox" class="logo-prev-box oculto">
+          <img id="cLogoImgPrev" class="logo-prev-img" src="">
+          <button class="btn bro bsm" id="btnQuitarLogo" type="button">Eliminar logo</button>
+        </div>
+      </div>
+
+      <div class="grp">
+        <div class="grp"><label>Moneda</label><input type="text" id="cMon" value="EUR"></div>
+      </div>
+      <div class="bgrp" style="justify-content:flex-start">
+        <button class="btn baz" id="btnGuardarCfg">Guardar configuracion</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL FORMULARIO CLIENTE -->
+<div id="modalCliente" class="modal oculto">
+  <div class="modal-body">
+    <h3 id="titModalCliente" style="margin-bottom:12px">Nuevo Cliente</h3>
+    <input type="hidden" id="cliEditId">
+    <div class="grp"><label>Nombre / Razón Social *</label><input type="text" id="cliNombre" placeholder="Ej: Juan Pérez o Construcciones S.L."></div>
+    <div class="grp"><label>NIF / CIF / NIE</label><input type="text" id="cliNif" placeholder="Ej: 12345678Z o B12345678"></div>
+    <div class="grp"><label>Dirección Fiscal</label><input type="text" id="cliDir" placeholder="Calle, Número, CP, Ciudad"></div>
+    <div class="r2">
+      <div class="grp"><label>Móvil / WhatsApp *</label><input type="tel" id="cliMovil" placeholder="Ej: 612345678 (para enviar por WhatsApp)"></div>
+      <div class="grp"><label>Teléfono Fijo</label><input type="tel" id="cliTel" placeholder="Ej: 912345678"></div>
+    </div>
+    <div class="grp"><label>Email</label><input type="email" id="cliEmail" placeholder="correo@ejemplo.com"></div>
+    <div class="bgrp" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn bor" id="btnCancelarCliente">Cancelar</button>
+      <button class="btn baz" id="btnGuardarCliente">Guardar Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MENU LATERAL -->
+<div id="menuOv" class="mov oculto"></div>
+<div id="menuPanel" class="smenu oculto">
+  <h2>Menu</h2>
+  <div class="mi" id="mInicio">&#127968; Inicio (Dashboard)</div>
+  <div class="mi" id="mNuevo">&#10133; Nuevo presupuesto</div>
+  <div class="mi" id="mPresupuestosLista">&#128203; Presupuestos</div>
+  <div class="mi" id="mFacturas">&#128195; Facturas</div>
+  <div class="mi" id="mClientes">&#128100; Clientes</div>
+  <div class="mi" id="mPlantillas">&#128203; Plantillas</div>
+  <div class="mi" id="mConfig">&#9881; Configuracion</div>
+  <hr style="margin:8px 0;border-color:#eee">
+  <div class="mi" id="mCerrarSesion">&#128682; Cerrar sesión</div>
+</div>
+
+<script>
+window.onerror = function(msg, src, linea, col, err) {
+  var el = document.getElementById('errDiag');
+  if (el) {
+    el.style.display = 'block';
+    el.innerHTML = '<b>Error JS (linea ' + linea + '):</b> ' + msg;
+  }
+  return false;
+};
+
+// CREDANCIALES DE ACCESO
+var AUTH_USER = 'Admin';
+var AUTH_PASS = 'reformas1234';
+
+var CATS = [
+  {id:'c1', n:'Obra gruesa', o:1},
+  {id:'c2', n:'Albanileria', o:2},
+  {id:'c3', n:'Electricidad', o:3},
+  {id:'c4', n:'Fontaneria', o:4},
+  {id:'c5', n:'Climatizacion', o:5},
+  {id:'c6', n:'Carpinteria', o:6},
+  {id:'c7', n:'Pintura', o:7},
+  {id:'c8', n:'Suelos', o:8},
+  {id:'c9', n:'Cocina', o:9},
+  {id:'c10', n:'Banos', o:10},
+  {id:'c11', n:'Acabados', o:11},
+  {id:'c12', n:'Varios', o:12}
+];
+
+var M = {
+  presupuestos: [],
+  items: [],
+  facturas: [],
+  plantillas: [],
+  clientes: [],
+  empresa: { nombre:'', nif:'', dir:'', tel:'', email:'', iban:'', bizum:'', iva:21, mon:'EUR', logo:'' }
+};
+
+var pid = null;
+var its = [];
+var fid = null;
+var factItems = [];
+var mon = 'EUR';
+var logoTempBase64 = '';
+
+var ELEMENTOS_POR_PAGINA = 5;
+var pagPresupuestoAct = 1;
+var pagFacturaAct = 1;
+var pagClienteAct = 1;
+var pagPlantillaAct = 1;
+
+var LS_KEY = 'presup_v2';
+var LS_AUTH_KEY = 'presup_auth_session';
+var lsOk = false;
+
+function probarLS() {
+  try {
+    localStorage.setItem('_test', '1');
+    localStorage.removeItem('_test');
+    lsOk = true;
+  } catch(e) { lsOk = false; }
+}
+
+function comprobarAutenticacion() {
+  if (!lsOk) return false;
+  return localStorage.getItem(LS_AUTH_KEY) === 'true';
+}
+
+function iniciarSesion() {
+  var u = (sg('loginUser').value || '').trim();
+  var p = (sg('loginPass').value || '').trim();
+  if (u === AUTH_USER && p === AUTH_PASS) {
+    if (lsOk) localStorage.setItem(LS_AUTH_KEY, 'true');
+    sg('loginErr').classList.add('oculto');
+    sg('panelLogin').classList.add('oculto');
+    irInicio();
+  } else {
+    sg('loginErr').classList.remove('oculto');
+  }
+}
+
+function cerrarSesion() {
+  if (lsOk) localStorage.removeItem(LS_AUTH_KEY);
+  sg('loginUser').value = '';
+  sg('loginPass').value = '';
+  sg('loginErr').classList.add('oculto');
+  sg('panelLogin').classList.remove('oculto');
+}
+
+function guardarDatos() {
+  if (!lsOk) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      presupuestos: M.presupuestos,
+      items: M.items,
+      facturas: M.facturas,
+      plantillas: M.plantillas,
+      clientes: M.clientes,
+      empresa: M.empresa
+    }));
+  } catch(e) {}
+}
+
+function cargarDatos() {
+  if (!lsOk) return;
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    var d = JSON.parse(raw);
+    if (d.presupuestos) M.presupuestos = d.presupuestos;
+    if (d.items) M.items = d.items;
+    if (d.facturas) M.facturas = d.facturas;
+    if (d.plantillas) M.plantillas = d.plantillas;
+    if (d.clientes) M.clientes = d.clientes;
+    if (d.empresa) M.empresa = d.empresa;
+  } catch(e) {}
+}
+
+function sg(id) { return document.getElementById(id); }
+
+function esc(t) {
+  var d = document.createElement('div');
+  d.textContent = String(t || '');
+  return d.innerHTML;
+}
+
+function fmt(n) {
+  try {
+    return (n || 0).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + mon;
+  } catch(e) {
+    return parseFloat(n || 0).toFixed(2) + ' ' + mon;
+  }
+}
+
+function toast(msg) {
+  var viejo = document.querySelector('.toast');
+  if (viejo) viejo.remove();
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.remove(); }, 2800);
+}
+
+function renderBadgeEstado(estado) {
+  var e = estado || 'borrador';
+  var label = e.toUpperCase();
+  if (e === 'borrador') label = '📝 BORRADOR';
+  if (e === 'enviado') label = '📤 ENVIADO';
+  if (e === 'aprobado') label = '✅ APROBADO';
+  if (e === 'rechazado') label = '❌ RECHAZADO';
+  return '<span class="badge badge-' + e + '">' + label + '</span>';
+}
+
+function renderBadgeFactura(estado) {
+  var e = estado || 'pendiente';
+  var label = e.toUpperCase();
+  if (e === 'pendiente') label = '⏳ PENDIENTE';
+  if (e === 'cobrada') label = '✅ COBRADA';
+  if (e === 'anulada') label = '🚫 ANULADA';
+  return '<span class="badge badge-' + e + '">' + label + '</span>';
+}
+
+function mostrarPanel(id) {
+  var paneles = ['panelDashboard', 'panelLista', 'panelEdit', 'panelFacturas', 'panelEditFactura', 'panelClientes', 'panelPlantillas', 'panelConfig'];
+  for (var i = 0; i < paneles.length; i++) {
+    var el = sg(paneles[i]);
+    if (el) el.classList.toggle('oculto', paneles[i] !== id);
+  }
+}
+
+function abrirMenu() {
+  sg('menuOv').classList.remove('oculto');
+  sg('menuPanel').classList.remove('oculto');
+}
+
+function cerrarMenu() {
+  sg('menuOv').classList.add('oculto');
+  sg('menuPanel').classList.add('oculto');
+}
+
+function irInicio() {
+  mostrarPanel('panelDashboard');
+  sg('titulo').textContent = 'Gestión de Reformas & Facturas';
+  sg('btnVolver').classList.add('oculto');
+  renderDashboard();
+}
+
+function irPresupuestosLista() {
+  mostrarPanel('panelLista');
+  sg('titulo').textContent = 'Presupuestos';
+  sg('btnVolver').classList.remove('oculto');
+  pid = null;
+  its = [];
+  pagPresupuestoAct = 1;
+  renderLista(sg('buscar').value);
+}
+
+function irClientes() {
+  mostrarPanel('panelClientes');
+  sg('titulo').textContent = 'Clientes';
+  sg('btnVolver').classList.remove('oculto');
+  pagClienteAct = 1;
+  renderClientes(sg('buscarCliente').value);
+}
+
+function renderDashboard() {
+  sg('dashNumPresupuestos').textContent = M.presupuestos.length;
+  sg('dashNumFacturas').textContent = M.facturas.length;
+  sg('dashNumClientes').textContent = M.clientes.length;
+}
+
+function renderPaginacion(containerId, pagActual, totalPaginas, callbackNombre) {
+  var el = sg(containerId);
+  if (!el) return;
+  if (totalPaginas <= 1) {
+    el.classList.add('oculto');
+    el.innerHTML = '';
+    return;
+  }
+  el.classList.remove('oculto');
+  var h = '';
+  h += '<button class="btn bor bsm" ' + (pagActual <= 1 ? 'disabled style="opacity:0.5"' : '') + ' onclick="' + callbackNombre + '(' + (pagActual - 1) + ')">&laquo; Anteriores</button>';
+  h += '<span>Pagina ' + pagActual + ' de ' + totalPaginas + '</span>';
+  h += '<button class="btn bor bsm" ' + (pagActual >= totalPaginas ? 'disabled style="opacity:0.5"' : '') + ' onclick="' + callbackNombre + '(' + (pagActual + 1) + ')">Siguientes &raquo;</button>';
+  el.innerHTML = h;
+}
+
+function cambiarPaginaPresupuesto(num) {
+  pagPresupuestoAct = num;
+  renderLista(sg('buscar').value);
+}
+
+function renderLista(filtro) {
+  var el = sg('lista');
+  if (!el) return;
+  var ps = M.presupuestos.slice();
+  if (filtro && filtro.length > 0) {
+    var f = filtro.toLowerCase();
+    ps = ps.filter(function(p) {
+      return (p.n || '').toLowerCase().indexOf(f) >= 0 ||
+             (p.cli || '').toLowerCase().indexOf(f) >= 0;
+    });
+  }
+  ps.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+
+  var totalItems = ps.length;
+  var totalPaginas = Math.ceil(totalItems / ELEMENTOS_POR_PAGINA);
+  if (pagPresupuestoAct > totalPaginas) pagPresupuestoAct = totalPaginas || 1;
+
+  if (totalItems === 0) {
+    el.innerHTML = '<p class="mvacio">No hay presupuestos.<br>Pulsa + para crear uno.</p>';
+    renderPaginacion('pagPresupuestos', 1, 0, 'cambiarPaginaPresupuesto');
+    return;
+  }
+
+  var inicio = (pagPresupuestoAct - 1) * ELEMENTOS_POR_PAGINA;
+  var fin = inicio + ELEMENTOS_POR_PAGINA;
+  var psPagina = ps.slice(inicio, fin);
+
+  var h = '';
+  for (var i = 0; i < psPagina.length; i++) {
+    var p = psPagina[i];
+    h += '<div class="pcard" data-id="' + p.id + '">';
+    h += '<div><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><h3 style="margin:0">' + esc(p.n || 'Sin nombre') + '</h3>' + renderBadgeEstado(p.estado) + '</div>';
+    h += '<small>' + (p.cli ? esc(p.cli) + ' &middot; ' : '') + (p.f || '') + '</small></div>';
+    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<div class="ptot">' + fmt(p.t || 0) + '</div>';
+    h += '<button class="btn bwa bsm btnWAPresDirecto" data-id="' + p.id + '" title="Enviar por WhatsApp">&#128241;</button>';
+    h += '<button class="btn bro bsm btnBorrPresDirecto" data-id="' + p.id + '">&#215;</button>';
+    h += '</div></div>';
+  }
+  el.innerHTML = h;
+
+  renderPaginacion('pagPresupuestos', pagPresupuestoAct, totalPaginas, 'cambiarPaginaPresupuesto');
+
+  var tarjetas = el.querySelectorAll('.pcard');
+  for (var j = 0; j < tarjetas.length; j++) {
+    tarjetas[j].addEventListener('click', function(e) {
+      if (e.target.classList.contains('btnBorrPresDirecto') || e.target.classList.contains('btnWAPresDirecto')) return;
+      var id = parseInt(this.getAttribute('data-id'));
+      abrirPresupuesto(id);
+    });
+  }
+
+  var btnsWA = el.querySelectorAll('.btnWAPresDirecto');
+  for (var w = 0; w < btnsWA.length; w++) {
+    btnsWA[w].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-id'));
+      enviarWhatsAppPresupuesto(id);
+    });
+  }
+
+  var btnsBorrar = el.querySelectorAll('.btnBorrPresDirecto');
+  for (var k = 0; k < btnsBorrar.length; k++) {
+    btnsBorrar[k].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-id'));
+      if (!confirm('¿Eliminar este presupuesto?')) return;
+      M.presupuestos = M.presupuestos.filter(function(x) { return x.id !== id; });
+      M.items = M.items.filter(function(x) { return x.pid !== id; });
+      guardarDatos();
+      toast('Presupuesto eliminado');
+      renderLista(sg('buscar').value);
+    });
+  }
+}
+
+// ══════════════════════════════════════════
+//  CLIENTES
+// ══════════════════════════════════════════
+function poblarSelectClientes(selId, valorSel) {
+  var sel = sg(selId);
+  if (!sel) return;
+  var h = '<option value="">-- Seleccionar cliente --</option>';
+  for (var i = 0; i < M.clientes.length; i++) {
+    var c = M.clientes[i];
+    h += '<option value="' + c.id + '"' + (String(c.id) === String(valorSel) ? ' selected' : '') + '>' + esc(c.nombre) + (c.nif ? ' (' + esc(c.nif) + ')' : '') + '</option>';
+  }
+  sel.innerHTML = h;
+}
+
+function mostrarInfoClienteSel() {
+  var selVal = sg('fClienteSelect').value;
+  var box = sg('infoClienteSel');
+  if (!selVal) { box.classList.add('oculto'); return; }
+  var cli = null;
+  for (var i = 0; i < M.clientes.length; i++) {
+    if (String(M.clientes[i].id) === String(selVal)) { cli = M.clientes[i]; break; }
+  }
+  if (!cli) { box.classList.add('oculto'); return; }
+  box.classList.remove('oculto');
+  var datos = [];
+  if (cli.nif) datos.push('NIF/CIF: ' + esc(cli.nif));
+  if (cli.dir) datos.push('Dir: ' + esc(cli.dir));
+  if (cli.movil) datos.push('Móvil: ' + esc(cli.movil));
+  if (cli.tel) datos.push('Tel: ' + esc(cli.tel));
+  if (cli.email) datos.push('Email: ' + esc(cli.email));
+  box.innerHTML = '<b>' + esc(cli.nombre) + '</b>' + (datos.length ? '<br><small>' + datos.join(' | ') + '</small>' : '');
+}
+
+function abrirModalCliente(idEdit) {
+  sg('cliEditId').value = idEdit || '';
+  sg('titModalCliente').textContent = idEdit ? 'Editar Cliente' : 'Nuevo Cliente';
+  if (idEdit) {
+    var c = null;
+    for (var i = 0; i < M.clientes.length; i++) {
+      if (String(M.clientes[i].id) === String(idEdit)) { c = M.clientes[i]; break; }
+    }
+    if (c) {
+      sg('cliNombre').value = c.nombre || '';
+      sg('cliNif').value = c.nif || '';
+      sg('cliDir').value = c.dir || '';
+      sg('cliMovil').value = c.movil || '';
+      sg('cliTel').value = c.tel || '';
+      sg('cliEmail').value = c.email || '';
+    }
+  } else {
+    sg('cliNombre').value = '';
+    sg('cliNif').value = '';
+    sg('cliDir').value = '';
+    sg('cliMovil').value = '';
+    sg('cliTel').value = '';
+    sg('cliEmail').value = '';
+  }
+  sg('modalCliente').classList.remove('oculto');
+}
+
+function cerrarModalCliente() {
+  sg('modalCliente').classList.add('oculto');
+}
+
+function guardarCliente() {
+  var nom = (sg('cliNombre').value || '').trim();
+  if (!nom) { alert('El nombre del cliente es obligatorio'); return; }
+  var idEdit = sg('cliEditId').value;
+  var cData = {
+    id: idEdit ? parseInt(idEdit) : Date.now(),
+    nombre: nom,
+    nif: (sg('cliNif').value || '').trim(),
+    dir: (sg('cliDir').value || '').trim(),
+    movil: (sg('cliMovil').value || '').trim(),
+    tel: (sg('cliTel').value || '').trim(),
+    email: (sg('cliEmail').value || '').trim()
+  };
+
+  if (idEdit) {
+    for (var i = 0; i < M.clientes.length; i++) {
+      if (String(M.clientes[i].id) === String(idEdit)) { M.clientes[i] = cData; break; }
+    }
+  } else {
+    M.clientes.push(cData);
+  }
+
+  guardarDatos();
+  cerrarModalCliente();
+  toast('Cliente guardado');
+  
+  if (!sg('panelClientes').classList.contains('oculto')) {
+    renderClientes(sg('buscarCliente').value);
+  }
+  poblarSelectClientes('fClienteSelect', cData.id);
+  poblarSelectClientes('fFactClienteSelect', cData.id);
+  mostrarInfoClienteSel();
+}
+
+function cambiarPaginaCliente(num) {
+  pagClienteAct = num;
+  renderClientes(sg('buscarCliente').value);
+}
+
+function renderClientes(filtro) {
+  var el = sg('listaClientes');
+  if (!el) return;
+  var cs = M.clientes.slice();
+  if (filtro && filtro.length > 0) {
+    var f = filtro.toLowerCase();
+    cs = cs.filter(function(c) {
+      return (c.nombre || '').toLowerCase().indexOf(f) >= 0 ||
+             (c.nif || '').toLowerCase().indexOf(f) >= 0 ||
+             (c.movil || '').toLowerCase().indexOf(f) >= 0 ||
+             (c.tel || '').toLowerCase().indexOf(f) >= 0 ||
+             (c.email || '').toLowerCase().indexOf(f) >= 0;
+    });
+  }
+  cs.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+
+  var totalItems = cs.length;
+  var totalPaginas = Math.ceil(totalItems / ELEMENTOS_POR_PAGINA);
+  if (pagClienteAct > totalPaginas) pagClienteAct = totalPaginas || 1;
+
+  if (totalItems === 0) {
+    el.innerHTML = '<p class="mvacio">No hay clientes guardados.<br>Pulsa + para crear uno.</p>';
+    renderPaginacion('pagClientes', 1, 0, 'cambiarPaginaCliente');
+    return;
+  }
+
+  var inicio = (pagClienteAct - 1) * ELEMENTOS_POR_PAGINA;
+  var fin = inicio + ELEMENTOS_POR_PAGINA;
+  var csPagina = cs.slice(inicio, fin);
+
+  var h = '';
+  for (var i = 0; i < csPagina.length; i++) {
+    var c = csPagina[i];
+    h += '<div class="card" style="display:flex;justify-content:space-between;align-items:center" data-cliid="' + c.id + '">';
+    h += '<div><strong>' + esc(c.nombre) + '</strong>';
+    if (c.nif) h += ' <small style="color:var(--az)">(' + esc(c.nif) + ')</small>';
+    var info = [c.dir, (c.movil ? 'Móvil: ' + c.movil : ''), (c.tel ? 'Tel: ' + c.tel : ''), c.email].filter(function(x){ return x; }).join(' | ');
+    if (info) h += '<br><small style="color:var(--texto2)">' + esc(info) + '</small>';
+    h += '</div>';
+    h += '<div style="display:flex;gap:6px">';
+    h += '<button class="btn bor bsm btnEditCli">Editar</button>';
+    h += '<button class="btn bro bsm btnBorrCli">&#215;</button>';
+    h += '</div></div>';
+  }
+  el.innerHTML = h;
+
+  renderPaginacion('pagClientes', pagClienteAct, totalPaginas, 'cambiarPaginaCliente');
+
+  var tarjetas = el.querySelectorAll('[data-cliid]');
+  for (var j = 0; j < tarjetas.length; j++) {
+    var item = tarjetas[j];
+    item.querySelector('.btnEditCli').addEventListener('click', function() {
+      var id = parseInt(this.closest('[data-cliid]').getAttribute('data-cliid'));
+      abrirModalCliente(id);
+    });
+    item.querySelector('.btnBorrCli').addEventListener('click', function() {
+      var id = parseInt(this.closest('[data-cliid]').getAttribute('data-cliid'));
+      if (!confirm('¿Eliminar este cliente?')) return;
+      M.clientes = M.clientes.filter(function(x) { return x.id !== id; });
+      guardarDatos();
+      renderClientes(sg('buscarCliente').value);
+    });
+  }
+}
+
+// ══════════════════════════════════════════
+//  NUEVO PRESUPUESTO
+// ══════════════════════════════════════════
+function nuevoPresupuesto() {
+  pid = null;
+  its = [];
+  mostrarPanel('panelEdit');
+  sg('titulo').textContent = 'Nuevo presupuesto';
+  sg('btnVolver').classList.remove('oculto');
+  sg('fNombre').value = '';
+  poblarSelectClientes('fClienteSelect', '');
+  mostrarInfoClienteSel();
+  sg('fFecha').value = new Date().toISOString().slice(0, 10);
+  sg('fEstado').value = 'borrador';
+  sg('fIvaDefecto').value = M.empresa.iva || 21;
+  sg('fNotas').value = '';
+  sg('fDtoT').value = 'percent';
+  sg('fDtoV').value = 0;
+  sg('btnBorrar').classList.add('oculto');
+  sg('btnConvertirFactura').classList.add('oculto');
+  mostrarEmpresa();
+  renderItems();
+}
+
+function mostrarEmpresa() {
+  var box = sg('boxEmpresa');
+  if (!box) return;
+  var e = M.empresa;
+  if (!e || !e.nombre) { box.classList.add('oculto'); return; }
+  box.classList.remove('oculto');
+  var lineas = [];
+  if (e.logo) lineas.push('<img src="' + e.logo + '" style="max-height:50px;max-width:100px;vertical-align:middle;margin-bottom:6px"><br>');
+  lineas.push('<b>' + esc(e.nombre) + '</b>');
+  if (e.nif) lineas.push('NIF: ' + esc(e.nif));
+  if (e.dir) lineas.push(esc(e.dir));
+  if (e.tel) lineas.push(esc(e.tel));
+  if (e.email) lineas.push(esc(e.email));
+  box.innerHTML = lineas.join('<br>');
+}
+
+function abrirPresupuesto(id) {
+  var p = null;
+  for (var i = 0; i < M.presupuestos.length; i++) {
+    if (M.presupuestos[i].id === id) { p = M.presupuestos[i]; break; }
+  }
+  if (!p) { toast('No encontrado'); return; }
+  pid = id;
+  its = [];
+  var ivaPres = p.ivaDefecto || M.empresa.iva || 21;
+  for (var j = 0; j < M.items.length; j++) {
+    if (M.items[j].pid === id) {
+      its.push({
+        id: M.items[j].id, ci: M.items[j].ci,
+        n: M.items[j].n,
+        pu: M.items[j].pu,
+        iva: (M.items[j].iva != null ? M.items[j].iva : ivaPres),
+        t: M.items[j].t
+      });
+    }
+  }
+  mostrarPanel('panelEdit');
+  sg('titulo').textContent = p.n || 'Editar';
+  sg('btnVolver').classList.remove('oculto');
+  sg('fNombre').value = p.n || '';
+  poblarSelectClientes('fClienteSelect', p.cliId || '');
+  mostrarInfoClienteSel();
+  sg('fFecha').value = p.f || '';
+  sg('fEstado').value = p.estado || 'borrador';
+  sg('fIvaDefecto').value = ivaPres;
+  sg('fNotas').value = p.nt || '';
+  sg('fDtoT').value = p.dt || 'percent';
+  sg('fDtoV').value = p.dv || 0;
+  sg('btnBorrar').classList.remove('oculto');
+  sg('btnConvertirFactura').classList.remove('oculto');
+  mostrarEmpresa();
+  renderItems();
+}
+
+function renderItems() {
+  var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
+  var g = {};
+  for (var i = 0; i < its.length; i++) {
+    var ci = its[i].ci || 'c12';
+    if (!g[ci]) g[ci] = [];
+    g[ci].push(its[i]);
+  }
+  var h = '';
+  for (var c = 0; c < cats.length; c++) {
+    var cat = cats[c];
+    var cits = g[cat.id] || [];
+    if (cits.length === 0) continue;
+    h += '<div class="icat-banner">' + cat.n + '</div>';
+    for (var j = 0; j < cits.length; j++) {
+      h += renderItem(cits[j], cats);
+    }
+  }
+  h += '<button class="btn bor bsm" style="margin-top:8px;width:100%" id="btnAddItem">+ Anadir partida</button>';
+  sg('itemsDiv').innerHTML = h;
+  var inputs = sg('itemsDiv').querySelectorAll('input, select, textarea');
+  for (var k = 0; k < inputs.length; k++) {
+    inputs[k].addEventListener('change', manejarCambioItem);
+    inputs[k].addEventListener('input', manejarCambioItem);
+  }
+  var btnAdd = sg('btnAddItem');
+  if (btnAdd) btnAdd.addEventListener('click', addItem);
+  var borrBtns = sg('itemsDiv').querySelectorAll('.idel');
+  for (var b = 0; b < borrBtns.length; b++) {
+    borrBtns[b].addEventListener('click', manejarBorrarItem);
+  }
+  calcResumen();
+}
+
+function renderItem(it, cats) {
+  var opts = '';
+  for (var i = 0; i < cats.length; i++) {
+    opts += '<option value="' + cats[i].id + '"' +
+            (cats[i].id === it.ci ? ' selected' : '') + '>' +
+            cats[i].n + '</option>';
+  }
+  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva || 21));
+  return '<div class="item-card" data-itid="' + it.id + '">' +
+    '<div class="item-top-row">' +
+      '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
+      '<button class="idel" data-itid="' + it.id + '">&#215;</button>' +
+    '</div>' +
+    '<div class="item-desc-row">' +
+      '<textarea data-campo="n" placeholder="Descripcion detallada de la partida...">' + esc(it.n || '') + '</textarea>' +
+    '</div>' +
+    '<div class="item-bottom-row">' +
+      '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio €">' +
+      '<select data-campo="iva">' +
+        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
+        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
+        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
+        '<option value="0"' + (ivaVal == 0 ? ' selected' : '') + '>0% IVA</option>' +
+      '</select>' +
+    '</div>' +
+  '</div>';
+}
+
+function manejarCambioItem(e) {
+  var fila = e.target.closest('.item-card');
+  if (!fila) return;
+  var id = fila.getAttribute('data-itid');
+  var campo = e.target.getAttribute('data-campo');
+  var val = e.target.value;
+  if (campo === 'pu' || campo === 'iva') val = parseFloat(val) || 0;
+  for (var i = 0; i < its.length; i++) {
+    if (String(its[i].id) === String(id)) {
+      its[i][campo] = val;
+      its[i].t = (its[i].pu || 0);
+      break;
+    }
+  }
+  calcResumen();
+}
+
+function manejarBorrarItem(e) {
+  var id = e.target.getAttribute('data-itid');
+  if (!confirm('Eliminar esta partida?')) return;
+  its = its.filter(function(x) { return String(x.id) !== String(id); });
+  renderItems();
+}
+
+function addItem() {
+  var ivaDef = parseFloat(sg('fIvaDefecto').value) || M.empresa.iva || 21;
+  its.push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), ci: 'c2', n: '', pu: 0, iva: ivaDef, t: 0 });
+  renderItems();
+}
+
+function aplicarIvaGeneralPresupuesto(nuevoIva) {
+  var rate = parseFloat(nuevoIva) || 21;
+  for (var i = 0; i < its.length; i++) {
+    its[i].iva = rate;
+  }
+  renderItems();
+}
+
+function calcResumen() {
+  var sub = 0;
+  var desgloseIva = {};
+
+  for (var i = 0; i < its.length; i++) {
+    var p = (its[i].pu || 0);
+    sub += p;
+  }
+
+  var dtEl = sg('fDtoT'), dvEl = sg('fDtoV');
+  if (!dtEl || !dvEl) return 0;
+  var dt = dtEl.value;
+  var dv = parseFloat(dvEl.value) || 0;
+  var da = dv > 0 ? (dt === 'percent' ? sub * (dv / 100) : dv) : 0;
+  var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
+
+  var totalIvaAcc = 0;
+  for (var j = 0; j < its.length; j++) {
+    var precioNetoItem = (its[j].pu || 0) * factorDto;
+    var tipoIvaItem = (its[j].iva != null ? its[j].iva : (parseFloat(sg('fIvaDefecto').value) || M.empresa.iva || 21));
+    var cuotaIvaItem = precioNetoItem * (tipoIvaItem / 100);
+    
+    if (!desgloseIva[tipoIvaItem]) desgloseIva[tipoIvaItem] = 0;
+    desgloseIva[tipoIvaItem] += cuotaIvaItem;
+    totalIvaAcc += cuotaIvaItem;
+  }
+
+  var net = sub - da;
+  var tot = net + totalIvaAcc;
+
+  sg('rSub').textContent = fmt(sub);
+  sg('rDto').textContent = da > 0 ? '-' + fmt(da) : '0,00 ' + mon;
+  sg('rDtoFila').classList.toggle('oculto', da <= 0);
+
+  var htmlIva = '';
+  var tipos = Object.keys(desgloseIva).sort(function(a,b){ return b-a; });
+  for (var k = 0; k < tipos.length; k++) {
+    var tRate = tipos[k];
+    htmlIva += '<div class="sr"><span>IVA (' + tRate + '%)</span><span>' + fmt(desgloseIva[tRate]) + '</span></div>';
+  }
+  if (tipos.length === 0) {
+    htmlIva = '<div class="sr"><span>IVA (21%)</span><span>' + fmt(0) + '</span></div>';
+  }
+  sg('desgloseIvaContainer').innerHTML = htmlIva;
+
+  sg('rTot').textContent = fmt(tot);
+  return tot;
+}
+
+function guardar() {
+  var n   = (sg('fNombre').value || '').trim() || 'Presupuesto';
+  var cliId = sg('fClienteSelect').value;
+  var cliNombre = '';
+  if (cliId) {
+    for (var c = 0; c < M.clientes.length; c++) {
+      if (String(M.clientes[c].id) === String(cliId)) { cliNombre = M.clientes[c].nombre; break; }
+    }
+  }
+  var f   = sg('fFecha').value || '';
+  var est = sg('fEstado').value || 'borrador';
+  var ivaDef = parseFloat(sg('fIvaDefecto').value) || M.empresa.iva || 21;
+  var nt  = (sg('fNotas').value || '').trim();
+  var dt  = sg('fDtoT').value;
+  var dv  = parseFloat(sg('fDtoV').value) || 0;
+  var tot = calcResumen();
+  var pres = { n:n, cliId:cliId, cli:cliNombre, f:f, estado:est, ivaDefecto:ivaDef, nt:nt, dt:dt, dv:dv, t:tot };
+  if (pid) {
+    pres.id = pid;
+    var enc = false;
+    for (var i = 0; i < M.presupuestos.length; i++) {
+      if (M.presupuestos[i].id === pid) { M.presupuestos[i] = pres; enc = true; break; }
+    }
+    if (!enc) M.presupuestos.push(pres);
+  } else {
+    pres.id = Date.now();
+    M.presupuestos.push(pres);
+    pid = pres.id;
+    sg('btnBorrar').classList.remove('oculto');
+    sg('titulo').textContent = n;
+  }
+  sg('btnConvertirFactura').classList.remove('oculto');
+  M.items = M.items.filter(function(x) { return x.pid !== pid; });
+  for (var j = 0; j < its.length; j++) {
+    M.items.push({ pid:pid, id:its[j].id, ci:its[j].ci, n:its[j].n, pu:its[j].pu, iva:its[j].iva, t:its[j].pu });
+  }
+  guardarDatos();
+  toast('Guardado correctamente');
+}
+
+function borrarPresupuesto() {
+  if (!pid) return;
+  if (!confirm('Eliminar este presupuesto?')) return;
+  M.presupuestos = M.presupuestos.filter(function(x) { return x.id !== pid; });
+  M.items = M.items.filter(function(x) { return x.pid !== pid; });
+  guardarDatos();
+  toast('Eliminado');
+  irInicio();
+}
+
+function enviarWhatsAppPresupuesto(idTarget) {
+  var targetId = idTarget || pid;
+  if (!targetId) { toast('Guarda el presupuesto primero'); return; }
+  var p = null;
+  for (var i = 0; i < M.presupuestos.length; i++) {
+    if (M.presupuestos[i].id === targetId) { p = M.presupuestos[i]; break; }
+  }
+  if (!p) { toast('Presupuesto no encontrado'); return; }
+
+  var cliObj = null;
+  if (p.cliId) {
+    for (var c = 0; c < M.clientes.length; c++) {
+      if (String(M.clientes[c].id) === String(p.cliId)) { cliObj = M.clientes[c]; break; }
+    }
+  }
+
+  var tel = cliObj ? (cliObj.movil || cliObj.tel || '') : '';
+  tel = String(tel || '').replace(/\D/g, '');
+  if (tel && tel.length === 9) tel = '34' + tel;
+
+  var empNom = M.empresa.nombre || 'Presupuestos';
+  var msg = "📋 *" + empNom.toUpperCase() + "*\n";
+  msg += "Presupuesto: *" + (p.n || 'Sin nombre') + "*\n";
+  if (cliObj) msg += "Cliente: " + cliObj.nombre + "\n";
+  msg += "Fecha: " + (p.f || '') + "\n\n";
+
+  var itemsP = M.items.filter(function(x) { return x.pid === targetId; });
+  if (itemsP.length > 0) {
+    msg += "*Desglose de partidas:*\n";
+    for (var j = 0; j < itemsP.length; j++) {
+      msg += "• " + (itemsP[j].n || 'Partida') + ": " + fmt(itemsP[j].pu) + "\n";
+    }
+    msg += "\n";
+  }
+
+  msg += "💰 *TOTAL ESTIMADO: " + fmt(p.t || 0) + "*\n";
+  if (p.nt) msg += "\nNotas: " + p.nt + "\n";
+  msg += "\nQuedamos a su entera disposición para cualquier duda o confirmación. ¡Un saludo!";
+
+  var url = "https://api.whatsapp.com/send?phone=" + encodeURIComponent(tel) + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+function convertirPresupuestoAFactura(idTarget) {
+  var targetId = idTarget || pid;
+  if (!targetId) { toast('Guarda el presupuesto primero'); return; }
+  var p = null;
+  for (var i = 0; i < M.presupuestos.length; i++) {
+    if (M.presupuestos[i].id === targetId) { p = M.presupuestos[i]; break; }
+  }
+  if (!p) return;
+
+  p.estado = 'aprobado';
+
+  var year = new Date().getFullYear();
+  var numIndex = (M.facturas.length + 1);
+  var numStr = 'F-' + year + '-' + (numIndex < 10 ? '00' : (numIndex < 100 ? '0' : '')) + numIndex;
+
+  var itemsP = M.items.filter(function(x) { return x.pid === targetId; });
+  var factItemsSnap = [];
+  for (var j = 0; j < itemsP.length; j++) {
+    factItemsSnap.push({
+      id: Date.now() + '' + j,
+      ci: itemsP[j].ci,
+      n: itemsP[j].n,
+      pu: itemsP[j].pu,
+      iva: itemsP[j].iva != null ? itemsP[j].iva : (M.empresa.iva || 21),
+      t: itemsP[j].pu || 0
+    });
+  }
+
+  var fechaHoy = new Date().toISOString().slice(0, 10);
+  var dVenc = new Date();
+  dVenc.setDate(dVenc.getDate() + 30);
+  var fechaVenc = dVenc.toISOString().slice(0, 10);
+
+  var nuevaFact = {
+    id: Date.now(),
+    num: numStr,
+    pid: targetId,
+    cliId: p.cliId || '',
+    cli: p.cli || '',
+    f: fechaHoy,
+    fVenc: fechaVenc,
+    formaPago: 'Transferencia Bancaria',
+    estado: 'pendiente',
+    dt: p.dt || 'percent',
+    dv: p.dv || 0,
+    nt: p.nt || ('Factura procedente de presupuesto: ' + (p.n || '')),
+    t: p.t || 0,
+    items: factItemsSnap
+  };
+
+  M.facturas.push(nuevaFact);
+  guardarDatos();
+  toast('Factura ' + numStr + ' generada correctamente');
+  abrirFactura(nuevaFact.id);
+}
+
+// ══════════════════════════════════════════
+//  FACTURAS
+// ══════════════════════════════════════════
+function irFacturas() {
+  mostrarPanel('panelFacturas');
+  sg('titulo').textContent = 'Facturas';
+  sg('btnVolver').classList.remove('oculto');
+  fid = null;
+  factItems = [];
+  pagFacturaAct = 1;
+  renderListaFacturas(sg('buscarFactura').value);
+}
+
+function cambiarPaginaFactura(num) {
+  pagFacturaAct = num;
+  renderListaFacturas(sg('buscarFactura').value);
+}
+
+function renderListaFacturas(filtro) {
+  var el = sg('listaFacturas');
+  if (!el) return;
+  var fs = M.facturas.slice();
+  if (filtro && filtro.length > 0) {
+    var f = filtro.toLowerCase();
+    fs = fs.filter(function(x) {
+      return (x.num || '').toLowerCase().indexOf(f) >= 0 ||
+             (x.cli || '').toLowerCase().indexOf(f) >= 0 ||
+             (x.nt || '').toLowerCase().indexOf(f) >= 0;
+    });
+  }
+  fs.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+
+  var totalItems = fs.length;
+  var totalPaginas = Math.ceil(totalItems / ELEMENTOS_POR_PAGINA);
+  if (pagFacturaAct > totalPaginas) pagFacturaAct = totalPaginas || 1;
+
+  if (totalItems === 0) {
+    el.innerHTML = '<p class="mvacio">No hay facturas registradas.<br>Pulsa + para crear una nueva factura.</p>';
+    renderPaginacion('pagFacturas', 1, 0, 'cambiarPaginaFactura');
+    return;
+  }
+
+  var inicio = (pagFacturaAct - 1) * ELEMENTOS_POR_PAGINA;
+  var fin = inicio + ELEMENTOS_POR_PAGINA;
+  var fsPagina = fs.slice(inicio, fin);
+
+  var h = '';
+  for (var i = 0; i < fsPagina.length; i++) {
+    var fItem = fsPagina[i];
+    h += '<div class="pcard" data-fid="' + fItem.id + '">';
+    h += '<div><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><h3 style="margin:0">' + esc(fItem.num || 'Sin Nº') + '</h3>' + renderBadgeFactura(fItem.estado) + '</div>';
+    h += '<small>' + (fItem.cli ? esc(fItem.cli) + ' &middot; ' : '') + (fItem.f || '') + '</small></div>';
+    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<div class="ptot">' + fmt(fItem.t || 0) + '</div>';
+    h += '<button class="btn bwa bsm btnWAFactDirecto" data-fid="' + fItem.id + '" title="Enviar por WhatsApp">&#128241;</button>';
+    h += '<button class="btn bro bsm btnBorrFactDirecto" data-fid="' + fItem.id + '">&#215;</button>';
+    h += '</div></div>';
+  }
+  el.innerHTML = h;
+
+  renderPaginacion('pagFacturas', pagFacturaAct, totalPaginas, 'cambiarPaginaFactura');
+
+  var tarjetas = el.querySelectorAll('[data-fid]');
+  for (var j = 0; j < tarjetas.length; j++) {
+    tarjetas[j].addEventListener('click', function(e) {
+      if (e.target.classList.contains('btnBorrFactDirecto') || e.target.classList.contains('btnWAFactDirecto')) return;
+      var id = parseInt(this.getAttribute('data-fid'));
+      abrirFactura(id);
+    });
+  }
+
+  var btnsWA = el.querySelectorAll('.btnWAFactDirecto');
+  for (var w = 0; w < btnsWA.length; w++) {
+    btnsWA[w].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-fid'));
+      enviarWhatsAppFactura(id);
+    });
+  }
+
+  var btnsBorrar = el.querySelectorAll('.btnBorrFactDirecto');
+  for (var k = 0; k < btnsBorrar.length; k++) {
+    btnsBorrar[k].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-fid'));
+      if (!confirm('¿Eliminar esta factura?')) return;
+      M.facturas = M.facturas.filter(function(x) { return x.id !== id; });
+      guardarDatos();
+      toast('Factura eliminada');
+      renderListaFacturas(sg('buscarFactura').value);
+    });
+  }
+}
+
+function nuevaFactura() {
+  fid = null;
+  factItems = [];
+  mostrarPanel('panelEditFactura');
+  sg('titulo').textContent = 'Nueva Factura';
+  sg('btnVolver').classList.remove('oculto');
+  
+  var year = new Date().getFullYear();
+  var numIndex = (M.facturas.length + 1);
+  var numStr = 'F-' + year + '-' + (numIndex < 10 ? '00' : (numIndex < 100 ? '0' : '')) + numIndex;
+  
+  sg('fFactNum').value = numStr;
+  sg('fFactEstado').value = 'pendiente';
+  poblarSelectClientes('fFactClienteSelect', '');
+  mostrarInfoFactClienteSel();
+  sg('fFactFormaPago').value = 'Transferencia Bancaria';
+  sg('fFactIvaDefecto').value = M.empresa.iva || 21;
+  
+  var fechaHoy = new Date().toISOString().slice(0, 10);
+  var dVenc = new Date();
+  dVenc.setDate(dVenc.getDate() + 30);
+  
+  sg('fFactFecha').value = fechaHoy;
+  sg('fFactVenc').value = dVenc.toISOString().slice(0, 10);
+  
+  var notaPago = '';
+  if (M.empresa.iban) notaPago += 'IBAN: ' + M.empresa.iban + '\n';
+  if (M.empresa.bizum) notaPago += 'Bizum: ' + M.empresa.bizum + '\n';
+  sg('fFactNotas').value = notaPago.trim();
+  
+  sg('fFactDtoT').value = 'percent';
+  sg('fFactDtoV').value = 0;
+  sg('btnBorrarFactura').classList.add('oculto');
+  renderFacturaItems();
+}
+
+function abrirFactura(id) {
+  var fObj = null;
+  for (var i = 0; i < M.facturas.length; i++) {
+    if (M.facturas[i].id === id) { fObj = M.facturas[i]; break; }
+  }
+  if (!fObj) { toast('Factura no encontrada'); return; }
+  fid = id;
+  var ivaFact = fObj.ivaDefecto || M.empresa.iva || 21;
+  factItems = (fObj.items || []).map(function(it) {
+    return {
+      id: it.id, ci: it.ci, n: it.n, pu: it.pu,
+      iva: (it.iva != null ? it.iva : ivaFact), t: it.t
+    };
+  });
+  
+  mostrarPanel('panelEditFactura');
+  sg('titulo').textContent = 'Factura ' + (fObj.num || '');
+  sg('btnVolver').classList.remove('oculto');
+  
+  sg('fFactNum').value = fObj.num || '';
+  sg('fFactEstado').value = fObj.estado || 'pendiente';
+  poblarSelectClientes('fFactClienteSelect', fObj.cliId || '');
+  mostrarInfoFactClienteSel();
+  sg('fFactFormaPago').value = fObj.formaPago || 'Transferencia Bancaria';
+  sg('fFactIvaDefecto').value = ivaFact;
+  sg('fFactFecha').value = fObj.f || '';
+  sg('fFactVenc').value = fObj.fVenc || '';
+  sg('fFactNotas').value = fObj.nt || '';
+  sg('fFactDtoT').value = fObj.dt || 'percent';
+  sg('fFactDtoV').value = fObj.dv || 0;
+  sg('btnBorrarFactura').classList.remove('oculto');
+  
+  renderFacturaItems();
+}
+
+function mostrarInfoFactClienteSel() {
+  var selVal = sg('fFactClienteSelect').value;
+  var box = sg('infoFactClienteSel');
+  if (!selVal) { box.classList.add('oculto'); return; }
+  var cli = null;
+  for (var i = 0; i < M.clientes.length; i++) {
+    if (String(M.clientes[i].id) === String(selVal)) { cli = M.clientes[i]; break; }
+  }
+  if (!cli) { box.classList.add('oculto'); return; }
+  box.classList.remove('oculto');
+  var datos = [];
+  if (cli.nif) datos.push('NIF/CIF: ' + esc(cli.nif));
+  if (cli.dir) datos.push('Dir: ' + esc(cli.dir));
+  if (cli.tel) datos.push('Tel: ' + esc(cli.tel));
+  if (cli.email) datos.push('Email: ' + esc(cli.email));
+  box.innerHTML = '<b>' + esc(cli.nombre) + '</b>' + (datos.length ? '<br><small>' + datos.join(' | ') + '</small>' : '');
+}
+
+function renderFacturaItems() {
+  var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
+  var g = {};
+  for (var i = 0; i < factItems.length; i++) {
+    var ci = factItems[i].ci || 'c12';
+    if (!g[ci]) g[ci] = [];
+    g[ci].push(factItems[i]);
+  }
+  var h = '';
+  for (var c = 0; c < cats.length; c++) {
+    var cat = cats[c];
+    var cits = g[cat.id] || [];
+    if (cits.length === 0) continue;
+    h += '<div class="icat-banner">' + cat.n + '</div>';
+    for (var j = 0; j < cits.length; j++) {
+      h += renderFacturaItem(cits[j], cats);
+    }
+  }
+  h += '<button class="btn bor bsm" style="margin-top:8px;width:100%" id="btnAddFactItem">+ Añadir concepto</button>';
+  sg('factItemsDiv').innerHTML = h;
+  var inputs = sg('factItemsDiv').querySelectorAll('input, select, textarea');
+  for (var k = 0; k < inputs.length; k++) {
+    inputs[k].addEventListener('change', manejarCambioFacturaItem);
+    inputs[k].addEventListener('input', manejarCambioFacturaItem);
+  }
+  var btnAdd = sg('btnAddFactItem');
+  if (btnAdd) btnAdd.addEventListener('click', addFacturaItem);
+  var borrBtns = sg('factItemsDiv').querySelectorAll('.idel');
+  for (var b = 0; b < borrBtns.length; b++) {
+    borrBtns[b].addEventListener('click', manejarBorrarFacturaItem);
+  }
+  calcFacturaResumen();
+}
+
+function renderFacturaItem(it, cats) {
+  var opts = '';
+  for (var i = 0; i < cats.length; i++) {
+    opts += '<option value="' + cats[i].id + '"' +
+            (cats[i].id === it.ci ? ' selected' : '') + '>' +
+            cats[i].n + '</option>';
+  }
+  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva || 21));
+  return '<div class="item-card" data-itid="' + it.id + '">' +
+    '<div class="item-top-row">' +
+      '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
+      '<button class="idel" data-itid="' + it.id + '">&#215;</button>' +
+    '</div>' +
+    '<div class="item-desc-row">' +
+      '<textarea data-campo="n" placeholder="Descripción de la partida o trabajo...">' + esc(it.n || '') + '</textarea>' +
+    '</div>' +
+    '<div class="item-bottom-row">' +
+      '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio €">' +
+      '<select data-campo="iva">' +
+        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
+        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
+        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
+        '<option value="0"' + (ivaVal == 0 ? ' selected' : '') + '>0% IVA</option>' +
+      '</select>' +
+    '</div>' +
+  '</div>';
+}
+
+function manejarCambioFacturaItem(e) {
+  var fila = e.target.closest('.item-card');
+  if (!fila) return;
+  var id = fila.getAttribute('data-itid');
+  var campo = e.target.getAttribute('data-campo');
+  var val = e.target.value;
+  if (campo === 'pu' || campo === 'iva') val = parseFloat(val) || 0;
+  for (var i = 0; i < factItems.length; i++) {
+    if (String(factItems[i].id) === String(id)) {
+      factItems[i][campo] = val;
+      factItems[i].t = (factItems[i].pu || 0);
+      break;
+    }
+  }
+  calcFacturaResumen();
+}
+
+function manejarBorrarFacturaItem(e) {
+  var id = e.target.getAttribute('data-itid');
+  if (!confirm('¿Eliminar este concepto?')) return;
+  factItems = factItems.filter(function(x) { return String(x.id) !== String(id); });
+  renderFacturaItems();
+}
+
+function addFacturaItem() {
+  var ivaDef = parseFloat(sg('fFactIvaDefecto').value) || M.empresa.iva || 21;
+  factItems.push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), ci: 'c2', n: '', pu: 0, iva: ivaDef, t: 0 });
+  renderFacturaItems();
+}
+
+function aplicarIvaGeneralFactura(nuevoIva) {
+  var rate = parseFloat(nuevoIva) || 21;
+  for (var i = 0; i < factItems.length; i++) {
+    factItems[i].iva = rate;
+  }
+  renderFacturaItems();
+}
+
+function calcFacturaResumen() {
+  var sub = 0;
+  var desgloseIva = {};
+
+  for (var i = 0; i < factItems.length; i++) {
+    var p = (factItems[i].pu || 0);
+    sub += p;
+  }
+
+  var dtEl = sg('fFactDtoT'), dvEl = sg('fFactDtoV');
+  if (!dtEl || !dvEl) return 0;
+  var dt = dtEl.value;
+  var dv = parseFloat(dvEl.value) || 0;
+  var da = dv > 0 ? (dt === 'percent' ? sub * (dv / 100) : dv) : 0;
+  var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
+
+  var totalIvaAcc = 0;
+  for (var j = 0; j < factItems.length; j++) {
+    var precioNetoItem = (factItems[j].pu || 0) * factorDto;
+    var tipoIvaItem = (factItems[j].iva != null ? factItems[j].iva : (parseFloat(sg('fFactIvaDefecto').value) || M.empresa.iva || 21));
+    var cuotaIvaItem = precioNetoItem * (tipoIvaItem / 100);
+    
+    if (!desgloseIva[tipoIvaItem]) desgloseIva[tipoIvaItem] = 0;
+    desgloseIva[tipoIvaItem] += cuotaIvaItem;
+    totalIvaAcc += cuotaIvaItem;
+  }
+
+  var net = sub - da;
+  var tot = net + totalIvaAcc;
+
+  sg('rFactSub').textContent = fmt(sub);
+  sg('rFactDto').textContent = da > 0 ? '-' + fmt(da) : '0,00 ' + mon;
+  sg('rFactDtoFila').classList.toggle('oculto', da <= 0);
+
+  var htmlIva = '';
+  var tipos = Object.keys(desgloseIva).sort(function(a,b){ return b-a; });
+  for (var k = 0; k < tipos.length; k++) {
+    var tRate = tipos[k];
+    htmlIva += '<div class="sr"><span>IVA (' + tRate + '%)</span><span>' + fmt(desgloseIva[tRate]) + '</span></div>';
+  }
+  if (tipos.length === 0) {
+    htmlIva = '<div class="sr"><span>IVA (21%)</span><span>' + fmt(0) + '</span></div>';
+  }
+  sg('factDesgloseIvaContainer').innerHTML = htmlIva;
+
+  sg('rFactTot').textContent = fmt(tot);
+  return tot;
+}
+
+function guardarFactura() {
+  var num = (sg('fFactNum').value || '').trim() || 'F-001';
+  var cliId = sg('fFactClienteSelect').value;
+  var cliNombre = '';
+  if (cliId) {
+    for (var c = 0; c < M.clientes.length; c++) {
+      if (String(M.clientes[c].id) === String(cliId)) { cliNombre = M.clientes[c].nombre; break; }
+    }
+  }
+  var est = sg('fFactEstado').value || 'pendiente';
+  var fp = sg('fFactFormaPago').value || 'Transferencia Bancaria';
+  var ivaDef = parseFloat(sg('fFactIvaDefecto').value) || M.empresa.iva || 21;
+  var f = sg('fFactFecha').value || '';
+  var fV = sg('fFactVenc').value || '';
+  var nt = (sg('fFactNotas').value || '').trim();
+  var dt = sg('fFactDtoT').value;
+  var dv = parseFloat(sg('fFactDtoV').value) || 0;
+  var tot = calcFacturaResumen();
+
+  var fact = {
+    num: num,
+    cliId: cliId,
+    cli: cliNombre,
+    estado: est,
+    formaPago: fp,
+    ivaDefecto: ivaDef,
+    f: f,
+    fVenc: fV,
+    nt: nt,
+    dt: dt,
+    dv: dv,
+    t: tot,
+    items: factItems.slice()
+  };
+
+  if (fid) {
+    fact.id = fid;
+    var enc = false;
+    for (var i = 0; i < M.facturas.length; i++) {
+      if (M.facturas[i].id === fid) { M.facturas[i] = fact; enc = true; break; }
+    }
+    if (!enc) M.facturas.push(fact);
+  } else {
+    fact.id = Date.now();
+    M.facturas.push(fact);
+    fid = fact.id;
+    sg('btnBorrarFactura').classList.remove('oculto');
+    sg('titulo').textContent = 'Factura ' + num;
+  }
+
+  guardarDatos();
+  toast('Factura guardada correctamente');
+}
+
+function borrarFactura() {
+  if (!fid) return;
+  if (!confirm('¿Eliminar esta factura?')) return;
+  M.facturas = M.facturas.filter(function(x) { return x.id !== fid; });
+  guardarDatos();
+  toast('Factura eliminada');
+  irFacturas();
+}
+
+function enviarWhatsAppFactura(idTarget) {
+  var targetId = idTarget || fid;
+  if (!targetId) { toast('Guarda la factura primero'); return; }
+  var fObj = null;
+  for (var i = 0; i < M.facturas.length; i++) {
+    if (M.facturas[i].id === targetId) { fObj = M.facturas[i]; break; }
+  }
+  if (!fObj) { toast('Factura no encontrada'); return; }
+
+  var cliObj = null;
+  if (fObj.cliId) {
+    for (var c = 0; c < M.clientes.length; c++) {
+      if (String(M.clientes[c].id) === String(fObj.cliId)) { cliObj = M.clientes[c]; break; }
+    }
+  }
+
+  var tel = cliObj ? (cliObj.movil || cliObj.tel || '') : '';
+  tel = String(tel || '').replace(/\D/g, '');
+  if (tel && tel.length === 9) tel = '34' + tel;
+
+  var empNom = M.empresa.nombre || 'Nuestra Empresa';
+  var msg = "📄 *FACTURA - " + empNom.toUpperCase() + "*\n";
+  msg += "Nº Factura: *" + (fObj.num || 'Sin Nº') + "*\n";
+  if (cliObj) msg += "Cliente: " + cliObj.nombre + "\n";
+  msg += "Fecha Emisión: " + (fObj.f || '') + "\n";
+  if (fObj.fVenc) msg += "Fecha Vencimiento: " + fObj.fVenc + "\n";
+  msg += "Forma de Pago: " + (fObj.formaPago || 'Transferencia') + "\n\n";
+
+  var itemsF = fObj.items || [];
+  if (itemsF.length > 0) {
+    msg += "*Conceptos:*\n";
+    for (var j = 0; j < itemsF.length; j++) {
+      msg += "• " + (itemsF[j].n || 'Partida') + ": " + fmt(itemsF[j].pu) + "\n";
+    }
+    msg += "\n";
+  }
+
+  msg += "💰 *TOTAL FACTURA: " + fmt(fObj.t || 0) + "*\n";
+  if (fObj.nt) msg += "\nInstrucciones de Pago:\n" + fObj.nt + "\n";
+  msg += "\nGracias por confiar en nuestros servicios.";
+
+  var url = "https://api.whatsapp.com/send?phone=" + encodeURIComponent(tel) + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+function exportarPDFFactura() {
+  if (!window.jspdf) {
+    toast('Cargando PDF... necesitas internet');
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.addEventListener('load', function() { generarPDFFactura(); });
+    s.addEventListener('error', function() { toast('Sin internet: no se puede generar PDF'); });
+    document.head.appendChild(s);
+    return;
+  }
+  generarPDFFactura();
+}
+
+function generarPDFFactura() {
+  if (!fid) { toast('Guarda la factura primero'); return; }
+  var fObj = null;
+  for (var i = 0; i < M.facturas.length; i++) {
+    if (M.facturas[i].id === fid) { fObj = M.facturas[i]; break; }
+  }
+  if (!fObj) { toast('Guarda la factura primero'); return; }
+
+  try {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    var pw = 190, y = 15;
+    var emp = M.empresa;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+    doc.text('FACTURA', 15, y);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.text('Nº: ' + (fObj.num || ''), 150, y);
+    y += 8;
+    doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 8;
+
+    if (emp && (emp.nombre || emp.logo)) {
+      y += 3;
+      var startX = 15;
+      if (emp.logo) {
+        try {
+          doc.addImage(emp.logo, 'JPEG', 15, y - 2, 25, 20);
+          startX = 45;
+        } catch(e) {
+          try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 25, 20); startX = 45; } catch(ex){}
+        }
+      }
+
+      if (emp.nombre) {
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text(emp.nombre, startX, y); y += 6;
+      }
+      if (emp.nif) {
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('NIF: ' + emp.nif, startX, y); y += 5;
+      }
+      var linEmp = [emp.dir, emp.tel, emp.email].filter(function(x) { return x; }).join(' | ');
+      if (linEmp) {
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(linEmp, startX, y); y += 5;
+      }
+      if (startX > 15 && y < 40) y = 40;
+      doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 6;
+    }
+
+    var cliObj = null;
+    if (fObj.cliId) {
+      for (var c = 0; c < M.clientes.length; c++) {
+        if (String(M.clientes[c].id) === String(fObj.cliId)) { cliObj = M.clientes[c]; break; }
+      }
+    }
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    if (cliObj) {
+      doc.text('Cliente: ' + cliObj.nombre, 15, y); y += 5;
+      if (cliObj.nif) { doc.text('NIF/CIF Cliente: ' + cliObj.nif, 15, y); y += 5; }
+      if (cliObj.dir) { doc.text('Dir. Fiscal: ' + cliObj.dir, 15, y); y += 5; }
+    } else if (fObj.cli) {
+      doc.text('Cliente: ' + fObj.cli, 15, y); y += 5;
+    }
+
+    doc.text('Fecha Emisión: ' + (fObj.f || ''), 15, y);
+    if (fObj.fVenc) doc.text('Fecha Vencimiento: ' + fObj.fVenc, 120, y);
+    y += 5;
+    if (fObj.formaPago) { doc.text('Forma de Pago: ' + fObj.formaPago, 15, y); y += 5; }
+    y += 4;
+
+    var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
+    var items = fObj.items || [];
+    var catOrd = {};
+    for (var ci = 0; ci < cats.length; ci++) catOrd[cats[ci].id] = ci;
+    items.sort(function(a, b) { return (catOrd[a.ci] || 99) - (catOrd[b.ci] || 99); });
+
+    for (var cc = 0; cc < cats.length; cc++) {
+      var cat = cats[cc];
+      var cits = items.filter(function(it) { return it.ci === cat.id; });
+      if (cits.length === 0) continue;
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFillColor(240, 240, 240);
+      doc.rect(10, y - 3, pw, 7, 'F');
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(cat.n, 15, y + 1); y += 8;
+      var cst = 0;
+      for (var ii = 0; ii < cits.length; ii++) {
+        var it = cits[ii];
+        if (y > 265) { doc.addPage(); y = 20; }
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
+        
+        var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
+        var lineasTexto = doc.splitTextToSize(textoConcepto, 150);
+        doc.text(lineasTexto, 15, y);
+        doc.text(fmt(it.pu), 172, y);
+        
+        var altoBloque = lineasTexto.length * 4;
+        cst += it.pu || 0;
+        y += Math.max(altoBloque, 5);
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.text('Subtotal ' + cat.n + ': ' + fmt(cst), 15, y); y += 7;
+    }
+
+    y += 3; doc.setDrawColor(0); doc.line(10, y, 200, y); y += 8;
+    var sub = items.reduce(function(s, i) { return s + (i.pu || 0); }, 0);
+    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+    doc.text('Subtotal: ' + fmt(sub), 140, y); y += 6;
+    var da = 0;
+    if (fObj.dv && fObj.dv > 0) {
+      da = fObj.dt === 'percent' ? sub * (fObj.dv / 100) : fObj.dv;
+      doc.text('Descuento: -' + fmt(da), 140, y); y += 6;
+    }
+
+    var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
+    var desgloseIva = {};
+    var totalIvaAcc = 0;
+    for (var j = 0; j < items.length; j++) {
+      var precioNeto = (items[j].pu || 0) * factorDto;
+      var tRate = (items[j].iva != null ? items[j].iva : (M.empresa.iva || 21));
+      var cIva = precioNeto * (tRate / 100);
+      if (!desgloseIva[tRate]) desgloseIva[tRate] = 0;
+      desgloseIva[tRate] += cIva;
+      totalIvaAcc += cIva;
+    }
+
+    var tipos = Object.keys(desgloseIva).sort(function(a,b){ return b-a; });
+    for (var k = 0; k < tipos.length; k++) {
+      var tr = tipos[k];
+      doc.text('IVA (' + tr + '%): ' + fmt(desgloseIva[tr]), 140, y); y += 6;
+    }
+
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL FACTURA: ' + fmt((sub - da) + totalIvaAcc), 140, y);
+    if (fObj.nt) {
+      y += 10;
+      doc.setFontSize(9); doc.setFont('helvetica', 'italic');
+      var linNotas = doc.splitTextToSize('Notas / Datos Pago: ' + fObj.nt, 180);
+      doc.text(linNotas, 15, y);
+    }
+
+    doc.save('Factura_' + (fObj.num || 'sin_numero').replace(/[^a-z0-9]/gi, '_') + '.pdf');
+    toast('PDF de Factura generado');
+  } catch(e) { toast('Error PDF Factura: ' + e.message); }
+}
+
+// ══════════════════════════════════════════
+//  CONFIGURACION EMPRESA CON LOGO
+// ══════════════════════════════════════════
+function abrirConfig() {
+  mostrarPanel('panelConfig');
+  sg('titulo').textContent = 'Configuracion';
+  sg('btnVolver').classList.remove('oculto');
+  var e = M.empresa;
+  sg('cNombre').value = e.nombre || '';
+  sg('cNif').value    = e.nif    || '';
+  sg('cDir').value    = e.dir    || '';
+  sg('cTel').value    = e.tel    || '';
+  sg('cEmail').value  = e.email  || '';
+  sg('cIban').value   = e.iban   || '';
+  sg('cBizum').value  = e.bizum  || '';
+  sg('cMon').value    = e.mon    || 'EUR';
+  sg('cLogoFile').value = '';
+  
+  logoTempBase64 = e.logo || '';
+  actualizarVistaPreviaLogo();
+}
+
+function actualizarVistaPreviaLogo() {
+  var box = sg('cLogoPrevBox');
+  var img = sg('cLogoImgPrev');
+  if (logoTempBase64) {
+    img.src = logoTempBase64;
+    box.classList.remove('oculto');
+  } else {
+    img.src = '';
+    box.classList.add('oculto');
+  }
+}
+
+function guardarConfig() {
+  M.empresa = {
+    nombre: (sg('cNombre').value || '').trim(),
+    nif:    (sg('cNif').value    || '').trim(),
+    dir:    (sg('cDir').value    || '').trim(),
+    tel:    (sg('cTel').value    || '').trim(),
+    email:  (sg('cEmail').value  || '').trim(),
+    iban:   (sg('cIban').value   || '').trim(),
+    bizum:  (sg('cBizum').value  || '').trim(),
+    mon:    (sg('cMon').value    || 'EUR').trim(),
+    logo:   logoTempBase64
+  };
+  mon = M.empresa.mon;
+  guardarDatos();
+  toast('Configuracion guardada');
+}
+
+function guardarPlantilla() {
+  var n = prompt('Nombre de la plantilla:');
+  if (!n) return;
+  var snap = [];
+  for (var i = 0; i < its.length; i++) {
+    snap.push({ ci: its[i].ci, n: its[i].n, pu: its[i].pu, iva: its[i].iva });
+  }
+  M.plantillas.push({ id: Date.now(), n: n, items: snap });
+  guardarDatos();
+  toast('Plantilla guardada');
+}
+
+function cambiarPaginaPlantilla(num) {
+  pagPlantillaAct = num;
+  renderPlantillas();
+}
+
+function renderPlantillas() {
+  var el = sg('listaPlantillas');
+  if (!el) return;
+
+  var ts = M.plantillas || [];
+  var totalItems = ts.length;
+  var totalPaginas = Math.ceil(totalItems / ELEMENTOS_POR_PAGINA);
+  if (pagPlantillaAct > totalPaginas) pagPlantillaAct = totalPaginas || 1;
+
+  if (totalItems === 0) {
+    el.innerHTML = '<p class="mvacio">No hay plantillas.<br>Crea una desde un presupuesto.</p>';
+    renderPaginacion('pagPlantillas', 1, 0, 'cambiarPaginaPlantilla');
+    return;
+  }
+
+  var inicio = (pagPlantillaAct - 1) * ELEMENTOS_POR_PAGINA;
+  var fin = inicio + ELEMENTOS_POR_PAGINA;
+  var tsPagina = ts.slice(inicio, fin);
+
+  var h = '';
+  for (var i = 0; i < tsPagina.length; i++) {
+    var t = tsPagina[i];
+    h += '<div class="card" style="display:flex;justify-content:space-between;align-items:center" data-tplid="' + t.id + '">';
+    h += '<div><strong>' + esc(t.n) + '</strong><br><small>' + (t.items ? t.items.length : 0) + ' partidas</small></div>';
+    h += '<div style="display:flex;gap:6px">';
+    h += '<button class="btn bor bsm btnUsarTpl">Usar</button>';
+    h += '<button class="btn bro bsm btnBorrTpl">&#215;</button>';
+    h += '</div></div>';
+  }
+  el.innerHTML = h;
+
+  renderPaginacion('pagPlantillas', pagPlantillaAct, totalPaginas, 'cambiarPaginaPlantilla');
+
+  var tarjetas = el.querySelectorAll('[data-tplid]');
+  for (var j = 0; j < tarjetas.length; j++) {
+    var tpl = tarjetas[j];
+    tpl.querySelector('.btnUsarTpl').addEventListener('click', function() {
+      var id = parseInt(this.closest('[data-tplid]').getAttribute('data-tplid'));
+      usarPlantilla(id);
+    });
+    tpl.querySelector('.btnBorrTpl').addEventListener('click', function() {
+      var id = parseInt(this.closest('[data-tplid]').getAttribute('data-tplid'));
+      if (!confirm('Eliminar plantilla?')) return;
+      M.plantillas = M.plantillas.filter(function(x) { return x.id !== id; });
+      guardarDatos();
+      renderPlantillas();
+    });
+  }
+}
+
+function usarPlantilla(id) {
+  var t = null;
+  for (var i = 0; i < M.plantillas.length; i++) {
+    if (M.plantillas[i].id === id) { t = M.plantillas[i]; break; }
+  }
+  if (!t || !t.items) return;
+  for (var j = 0; j < t.items.length; j++) {
+    var x = t.items[j];
+    its.push({ id: Date.now() + '' + j, ci: x.ci, n: x.n, pu: x.pu, iva: x.iva, t: x.pu || 0 });
+  }
+  nuevoPresupuesto();
+  renderItems();
+  toast('Plantilla aplicada');
+}
+
+// ══════════════════════════════════════════
+//  PDF CON MULTILINEA EN CONCEPTO
+// ══════════════════════════════════════════
+function exportarPDF() {
+  if (!window.jspdf) {
+    toast('Cargando PDF... necesitas internet');
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.addEventListener('load', function() { generarPDF(); });
+    s.addEventListener('error', function() { toast('Sin internet: no se puede generar PDF'); });
+    document.head.appendChild(s);
+    return;
+  }
+  generarPDF();
+}
+
+function generarPDF() {
+  if (!pid) { toast('Guarda el presupuesto primero'); return; }
+  var p = null;
+  for (var i = 0; i < M.presupuestos.length; i++) {
+    if (M.presupuestos[i].id === pid) { p = M.presupuestos[i]; break; }
+  }
+  if (!p) { toast('Guarda el presupuesto primero'); return; }
+  try {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    var pw = 190, y = 15;
+    var emp = M.empresa;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+    doc.text('PRESUPUESTO DE REFORMAS', 15, y);
+    y += 8;
+    doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 8;
+
+    if (emp && (emp.nombre || emp.logo)) {
+      y += 3;
+      var startX = 15;
+      if (emp.logo) {
+        try {
+          doc.addImage(emp.logo, 'JPEG', 15, y - 2, 25, 20);
+          startX = 45;
+        } catch(e) {
+          try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 25, 20); startX = 45; } catch(ex){}
+        }
+      }
+
+      if (emp.nombre) {
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text(emp.nombre, startX, y); y += 6;
+      }
+      if (emp.nif) {
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('NIF: ' + emp.nif, startX, y); y += 5;
+      }
+      var linEmp = [emp.dir, emp.tel, emp.email].filter(function(x) { return x; }).join(' | ');
+      if (linEmp) {
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(linEmp, startX, y); y += 5;
+      }
+      if (startX > 15 && y < 40) y = 40;
+      doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 6;
+    }
+
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.text('Presupuesto: ' + (p.n || ''), 15, y); y += 6;
+
+    var cliObj = null;
+    if (p.cliId) {
+      for (var c = 0; c < M.clientes.length; c++) {
+        if (String(M.clientes[c].id) === String(p.cliId)) { cliObj = M.clientes[c]; break; }
+      }
+    }
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    if (cliObj) {
+      doc.text('Cliente: ' + cliObj.nombre, 15, y); y += 5;
+      if (cliObj.nif) { doc.text('NIF/CIF Cliente: ' + cliObj.nif, 15, y); y += 5; }
+      if (cliObj.dir) { doc.text('Dir. Fiscal: ' + cliObj.dir, 15, y); y += 5; }
+    } else if (p.cli) {
+      doc.text('Cliente: ' + p.cli, 15, y); y += 5;
+    }
+
+    doc.text('Fecha: ' + (p.f || ''), 15, y); y += 8;
+
+    var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
+    var items = M.items.filter(function(x) { return x.pid === pid; });
+    var catOrd = {};
+    for (var ci = 0; ci < cats.length; ci++) catOrd[cats[ci].id] = ci;
+    items.sort(function(a, b) { return (catOrd[a.ci] || 99) - (catOrd[b.ci] || 99); });
+
+    for (var cc = 0; cc < cats.length; cc++) {
+      var cat = cats[cc];
+      var cits = items.filter(function(it) { return it.ci === cat.id; });
+      if (cits.length === 0) continue;
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFillColor(240, 240, 240);
+      doc.rect(10, y - 3, pw, 7, 'F');
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(cat.n, 15, y + 1); y += 8;
+      var cst = 0;
+      for (var ii = 0; ii < cits.length; ii++) {
+        var it = cits[ii];
+        if (y > 265) { doc.addPage(); y = 20; }
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
+        
+        var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
+        var lineasTexto = doc.splitTextToSize(textoConcepto, 150);
+        doc.text(lineasTexto, 15, y);
+        doc.text(fmt(it.pu), 172, y);
+        
+        var altoBloque = lineasTexto.length * 4;
+        cst += it.pu || 0;
+        y += Math.max(altoBloque, 5);
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.text('Subtotal ' + cat.n + ': ' + fmt(cst), 15, y); y += 7;
+    }
+
+    y += 3; doc.setDrawColor(0); doc.line(10, y, 200, y); y += 8;
+    var sub = items.reduce(function(s, i) { return s + (i.pu || 0); }, 0);
+    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+    doc.text('Subtotal: ' + fmt(sub), 140, y); y += 6;
+    var da = 0;
+    if (p.dv && p.dv > 0) {
+      da = p.dt === 'percent' ? sub * (p.dv / 100) : p.dv;
+      doc.text('Descuento: -' + fmt(da), 140, y); y += 6;
+    }
+
+    var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
+    var desgloseIva = {};
+    var totalIvaAcc = 0;
+    for (var j = 0; j < items.length; j++) {
+      var precioNeto = (items[j].pu || 0) * factorDto;
+      var tRate = (items[j].iva != null ? items[j].iva : (M.empresa.iva || 21));
+      var cIva = precioNeto * (tRate / 100);
+      if (!desgloseIva[tRate]) desgloseIva[tRate] = 0;
+      desgloseIva[tRate] += cIva;
+      totalIvaAcc += cIva;
+    }
+
+    var tipos = Object.keys(desgloseIva).sort(function(a,b){ return b-a; });
+    for (var k = 0; k < tipos.length; k++) {
+      var tr = tipos[k];
+      doc.text('IVA (' + tr + '%): ' + fmt(desgloseIva[tr]), 140, y); y += 6;
+    }
+
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL: ' + fmt((sub - da) + totalIvaAcc), 140, y);
+    if (p.nt) { y += 10; doc.setFontSize(9); doc.setFont('helvetica', 'italic'); doc.text('Notas: ' + p.nt, 15, y); }
+
+    doc.save('Presupuesto_' + (p.n || 'sin_nombre').replace(/[^a-z0-9]/gi, '_') + '_' + Date.now() + '.pdf');
+    toast('PDF generado');
+  } catch(e) { toast('Error PDF: ' + e.message); }
+}
+
+// ══════════════════════════════════════════
+//  ASIGNAR EVENTOS
+// ══════════════════════════════════════════
+function asignarEventos() {
+  sg('btnLoginEntrar').addEventListener('click', iniciarSesion);
+  sg('loginPass').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') iniciarSesion();
+  });
+
+  sg('buscar').addEventListener('input', function() { pagPresupuestoAct = 1; renderLista(this.value); });
+  sg('buscarFactura').addEventListener('input', function() { pagFacturaAct = 1; renderListaFacturas(this.value); });
+  sg('buscarCliente').addEventListener('input', function() { pagClienteAct = 1; renderClientes(this.value); });
+  
+  sg('btnNuevo').addEventListener('click', nuevoPresupuesto);
+  sg('btnNuevaFactura').addEventListener('click', nuevaFactura);
+  sg('btnVolver').addEventListener('click', irInicio);
+  sg('btnMenu').addEventListener('click', abrirMenu);
+
+  sg('btnGuardar').addEventListener('click', guardar);
+  sg('btnPDF').addEventListener('click', exportarPDF);
+  sg('btnWhatsApp').addEventListener('click', function() { enviarWhatsAppPresupuesto(); });
+  sg('btnConvertirFactura').addEventListener('click', function() { convertirPresupuestoAFactura(); });
+  sg('btnPlantilla').addEventListener('click', guardarPlantilla);
+  sg('btnBorrar').addEventListener('click', borrarPresupuesto);
+
+  sg('btnGuardarFactura').addEventListener('click', guardarFactura);
+  sg('btnPDFFactura').addEventListener('click', exportarPDFFactura);
+  sg('btnWAFactura').addEventListener('click', function() { enviarWhatsAppFactura(); });
+  sg('btnBorrarFactura').addEventListener('click', borrarFactura);
+
+  sg('fDtoT').addEventListener('change', calcResumen);
+  sg('fDtoV').addEventListener('input', calcResumen);
+  sg('fIvaDefecto').addEventListener('change', function() { aplicarIvaGeneralPresupuesto(this.value); });
+
+  sg('fFactDtoT').addEventListener('change', calcFacturaResumen);
+  sg('fFactDtoV').addEventListener('input', calcFacturaResumen);
+  sg('fFactIvaDefecto').addEventListener('change', function() { aplicarIvaGeneralFactura(this.value); });
+
+  sg('fClienteSelect').addEventListener('change', mostrarInfoClienteSel);
+  sg('fFactClienteSelect').addEventListener('change', mostrarInfoFactClienteSel);
+  sg('btnNuevoClienteRapido').addEventListener('click', function() { abrirModalCliente(); });
+
+  sg('btnNuevoCliente').addEventListener('click', function() { abrirModalCliente(); });
+  sg('btnCancelarCliente').addEventListener('click', cerrarModalCliente);
+  sg('btnGuardarCliente').addEventListener('click', guardarCliente);
+
+  sg('btnGuardarCfg').addEventListener('click', guardarConfig);
+
+  sg('cLogoFile').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('La imagen es demasiado grande. Por favor elige una imagen de menos de 2MB.');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      logoTempBase64 = ev.target.result;
+      actualizarVistaPreviaLogo();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  sg('btnQuitarLogo').addEventListener('click', function() {
+    logoTempBase64 = '';
+    sg('cLogoFile').value = '';
+    actualizarVistaPreviaLogo();
+  });
+
+  // Dashboard event listeners
+  sg('btnDashNuevoPresupuesto').addEventListener('click', nuevoPresupuesto);
+  sg('btnDashNuevaFactura').addEventListener('click', nuevaFactura);
+  sg('btnDashNuevoCliente').addEventListener('click', function() { abrirModalCliente(); });
+
+  sg('cardDashPresupuestos').addEventListener('click', irPresupuestosLista);
+  sg('cardDashFacturas').addEventListener('click', irFacturas);
+  sg('cardDashClientes').addEventListener('click', irClientes);
+
+  sg('btnIrPresupuestosLista').addEventListener('click', irPresupuestosLista);
+  sg('btnIrFacturasLista').addEventListener('click', irFacturas);
+  sg('btnIrClientesLista').addEventListener('click', irClientes);
+
+  sg('menuOv').addEventListener('click', cerrarMenu);
+  sg('mInicio').addEventListener('click', function() { cerrarMenu(); irInicio(); });
+  sg('mNuevo').addEventListener('click', function() { cerrarMenu(); nuevoPresupuesto(); });
+  sg('mPresupuestosLista').addEventListener('click', function() { cerrarMenu(); irPresupuestosLista(); });
+  sg('mFacturas').addEventListener('click', function() { cerrarMenu(); irFacturas(); });
+  sg('mClientes').addEventListener('click', function() {
+    cerrarMenu();
+    mostrarPanel('panelClientes');
+    sg('titulo').textContent = 'Clientes';
+    sg('btnVolver').classList.remove('oculto');
+    pagClienteAct = 1;
+    renderClientes(sg('buscarCliente').value);
+  });
+  sg('mPlantillas').addEventListener('click', function() {
+    cerrarMenu();
+    mostrarPanel('panelPlantillas');
+    sg('titulo').textContent = 'Plantillas';
+    sg('btnVolver').classList.remove('oculto');
+    pagPlantillaAct = 1;
+    renderPlantillas();
+  });
+  sg('mConfig').addEventListener('click', function() { cerrarMenu(); abrirConfig(); });
+  sg('mCerrarSesion').addEventListener('click', function() { cerrarMenu(); cerrarSesion(); });
+}
+
+window.onload = function() {
+  try {
+    probarLS();
+    cargarDatos();
+    mon = M.empresa.mon || 'EUR';
+    asignarEventos();
+    
+    if (comprobarAutenticacion()) {
+      sg('panelLogin').classList.add('oculto');
+      irInicio();
+    } else {
+      sg('panelLogin').classList.remove('oculto');
+    }
+
+    if (!lsOk) {
+      toast('Aviso: los datos no se guardaran entre sesiones (localStorage no disponible)');
+    }
+  } catch(e) {
+    var el = sg('errDiag');
+    if (el) { el.style.display = 'block'; el.textContent = 'Error al iniciar: ' + e.message; }
+  }
+};
+</script>
+</body>
+</html>
