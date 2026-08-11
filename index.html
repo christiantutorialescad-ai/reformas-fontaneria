@@ -1256,27 +1256,12 @@ function enviarWhatsAppPresupuesto(idTarget) {
   tel = String(tel || '').replace(/\D/g, '');
   if (tel && tel.length === 9) tel = '34' + tel;
 
-  var empNom = M.empresa.nombre || 'Presupuestos';
-  var msg = "📋 *" + empNom.toUpperCase() + "*\n";
-  msg += "Presupuesto: *" + (p.n || 'Sin nombre') + "*\n";
-  if (cliObj) msg += "Cliente: " + cliObj.nombre + "\n";
-  msg += "Fecha: " + (p.f || '') + "\n\n";
-
-  var itemsP = M.items.filter(function(x) { return x.pid === targetId; });
-  if (itemsP.length > 0) {
-    msg += "*Desglose de partidas:*\n";
-    for (var j = 0; j < itemsP.length; j++) {
-      msg += "• " + (itemsP[j].n || 'Partida') + ": " + fmt(itemsP[j].pu) + "\n";
-    }
-    msg += "\n";
-  }
-
-  msg += "💰 *TOTAL ESTIMADO: " + fmt(p.t || 0) + "*\n";
-  if (p.nt) msg += "\nNotas: " + p.nt + "\n";
-  msg += "\nQuedamos a su entera disposición para cualquier duda o confirmación. ¡Un saludo!";
+  var msg = "Hola, te adjunto el presupuesto en PDF. Quedamos a tu disposición para cualquier duda. ¡Un saludo!";
 
   var url = "https://api.whatsapp.com/send?phone=" + encodeURIComponent(tel) + "&text=" + encodeURIComponent(msg);
   window.open(url, '_blank');
+
+  exportarPDF(targetId);
 }
 
 function convertirPresupuestoAFactura(idTarget) {
@@ -1750,49 +1735,34 @@ function enviarWhatsAppFactura(idTarget) {
   tel = String(tel || '').replace(/\D/g, '');
   if (tel && tel.length === 9) tel = '34' + tel;
 
-  var empNom = M.empresa.nombre || 'Nuestra Empresa';
-  var msg = "📄 *FACTURA - " + empNom.toUpperCase() + "*\n";
-  msg += "Nº Factura: *" + (fObj.num || 'Sin Nº') + "*\n";
-  if (cliObj) msg += "Cliente: " + cliObj.nombre + "\n";
-  msg += "Fecha Emisión: " + (fObj.f || '') + "\n";
-  if (fObj.fVenc) msg += "Fecha Vencimiento: " + fObj.fVenc + "\n";
-  msg += "Forma de Pago: " + (fObj.formaPago || 'Transferencia') + "\n\n";
-
-  var itemsF = fObj.items || [];
-  if (itemsF.length > 0) {
-    msg += "*Conceptos:*\n";
-    for (var j = 0; j < itemsF.length; j++) {
-      msg += "• " + (itemsF[j].n || 'Partida') + ": " + fmt(itemsF[j].pu) + "\n";
-    }
-    msg += "\n";
-  }
-
-  msg += "💰 *TOTAL FACTURA: " + fmt(fObj.t || 0) + "*\n";
-  if (fObj.nt) msg += "\nInstrucciones de Pago:\n" + fObj.nt + "\n";
-  msg += "\nGracias por confiar en nuestros servicios.";
+  var msg = "Hola, te adjunto la factura en PDF. Gracias por confiar en nuestros servicios. ¡Un saludo!";
 
   var url = "https://api.whatsapp.com/send?phone=" + encodeURIComponent(tel) + "&text=" + encodeURIComponent(msg);
   window.open(url, '_blank');
+
+  exportarPDFFactura(targetId);
 }
 
-function exportarPDFFactura() {
+function exportarPDFFactura(optId) {
+  var targetId = optId || fid;
   if (!window.jspdf) {
     toast('Cargando PDF... necesitas internet');
     var s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    s.addEventListener('load', function() { generarPDFFactura(); });
+    s.addEventListener('load', function() { generarPDFFactura(targetId); });
     s.addEventListener('error', function() { toast('Sin internet: no se puede generar PDF'); });
     document.head.appendChild(s);
     return;
   }
-  generarPDFFactura();
+  generarPDFFactura(targetId);
 }
 
-function generarPDFFactura() {
-  if (!fid) { toast('Guarda la factura primero'); return; }
+function generarPDFFactura(idTarget) {
+  var targetId = idTarget || fid;
+  if (!targetId) { toast('Guarda la factura primero'); return; }
   var fObj = null;
   for (var i = 0; i < M.facturas.length; i++) {
-    if (M.facturas[i].id === fid) { fObj = M.facturas[i]; break; }
+    if (M.facturas[i].id === targetId) { fObj = M.facturas[i]; break; }
   }
   if (!fObj) { toast('Guarda la factura primero'); return; }
 
@@ -2073,24 +2043,26 @@ function usarPlantilla(id) {
 // ══════════════════════════════════════════
 //  PDF CON MULTILINEA EN CONCEPTO
 // ══════════════════════════════════════════
-function exportarPDF() {
+function exportarPDF(optId) {
+  var targetId = optId || pid;
   if (!window.jspdf) {
     toast('Cargando PDF... necesitas internet');
     var s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    s.addEventListener('load', function() { generarPDF(); });
+    s.addEventListener('load', function() { generarPDF(targetId); });
     s.addEventListener('error', function() { toast('Sin internet: no se puede generar PDF'); });
     document.head.appendChild(s);
     return;
   }
-  generarPDF();
+  generarPDF(targetId);
 }
 
-function generarPDF() {
-  if (!pid) { toast('Guarda el presupuesto primero'); return; }
+function generarPDF(idTarget) {
+  var targetId = idTarget || pid;
+  if (!targetId) { toast('Guarda el presupuesto primero'); return; }
   var p = null;
   for (var i = 0; i < M.presupuestos.length; i++) {
-    if (M.presupuestos[i].id === pid) { p = M.presupuestos[i]; break; }
+    if (M.presupuestos[i].id === targetId) { p = M.presupuestos[i]; break; }
   }
   if (!p) { toast('Guarda el presupuesto primero'); return; }
   try {
@@ -2155,7 +2127,7 @@ function generarPDF() {
     doc.text('Fecha: ' + (p.f || ''), 15, y); y += 8;
 
     var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
-    var items = M.items.filter(function(x) { return x.pid === pid; });
+    var items = M.items.filter(function(x) { return x.pid === targetId; });
     var catOrd = {};
     for (var ci = 0; ci < cats.length; ci++) catOrd[cats[ci].id] = ci;
     items.sort(function(a, b) { return (catOrd[a.ci] || 99) - (catOrd[b.ci] || 99); });
@@ -2245,14 +2217,14 @@ function asignarEventos() {
   sg('btnMenu').addEventListener('click', abrirMenu);
 
   sg('btnGuardar').addEventListener('click', guardar);
-  sg('btnPDF').addEventListener('click', exportarPDF);
+  sg('btnPDF').addEventListener('click', function() { exportarPDF(); });
   sg('btnWhatsApp').addEventListener('click', function() { enviarWhatsAppPresupuesto(); });
   sg('btnConvertirFactura').addEventListener('click', function() { convertirPresupuestoAFactura(); });
   sg('btnPlantilla').addEventListener('click', guardarPlantilla);
   sg('btnBorrar').addEventListener('click', borrarPresupuesto);
 
   sg('btnGuardarFactura').addEventListener('click', guardarFactura);
-  sg('btnPDFFactura').addEventListener('click', exportarPDFFactura);
+  sg('btnPDFFactura').addEventListener('click', function() { exportarPDFFactura(); });
   sg('btnWAFactura').addEventListener('click', function() { enviarWhatsAppFactura(); });
   sg('btnBorrarFactura').addEventListener('click', borrarFactura);
 
