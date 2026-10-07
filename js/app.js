@@ -291,6 +291,8 @@ async function saveBudgetFromUI() {
     budgetItems = await getItemsByBudget(budgetData.id)
   }
   showToast('Presupuesto guardado')
+  if (typeof exportToPDF === 'function') exportToPDF()
+  goHome()
 }
 
 function toggleMenu() {

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gestión de Reformas & Facturas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -280,12 +281,8 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
     <div class="bgrp">
-      <button class="btn baz" id="btnGuardar">&#128190; Guardar</button>
-      <button class="btn bna" id="btnPDF">&#128196; PDF</button>
-      <button class="btn bwa" id="btnWhatsApp">&#128241; WhatsApp</button>
-      <button class="btn baz oculto" id="btnConvertirFactura" style="background:#2E7D32">&#128195; Convertir a Factura</button>
-      <button class="btn bor" id="btnPlantilla">&#128203; Plantilla</button>
-      <button class="btn bro bsm oculto" id="btnBorrar">Eliminar</button>
+      <button class="btn baz" id="btnGuardar" style="flex:1; max-width:200px">&#128190; Guardar</button>
+      <button class="btn bor" id="btnCancelarPresupuesto" style="flex:1; max-width:200px">Cancelar</button>
     </div>
   </div>
 
@@ -391,10 +388,8 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
     <div class="bgrp">
-      <button class="btn baz" id="btnGuardarFactura">&#128190; Guardar Factura</button>
-      <button class="btn bna" id="btnPDFFactura">&#128196; PDF Factura</button>
-      <button class="btn bwa" id="btnWAFactura">&#128241; WhatsApp</button>
-      <button class="btn bro bsm oculto" id="btnBorrarFactura">Eliminar</button>
+      <button class="btn baz" id="btnGuardarFactura" style="flex:1; max-width:200px">&#128190; Guardar Factura</button>
+      <button class="btn bor" id="btnCancelarFactura" style="flex:1; max-width:200px">Cancelar</button>
     </div>
   </div>
 
@@ -750,6 +745,7 @@ function renderLista(filtro) {
     h += '<small>' + (p.cli ? esc(p.cli) + ' &middot; ' : '') + (p.f || '') + '</small></div>';
     h += '<div style="display:flex;align-items:center;gap:8px">';
     h += '<div class="ptot">' + fmt(p.t || 0) + '</div>';
+    h += '<button class="btn baz bsm btnVerPresDirecto" data-id="' + p.id + '">&#128196; Ver PDF</button>';
     h += '<button class="btn bwa bsm btnWAPresDirecto" data-id="' + p.id + '" title="Enviar por WhatsApp">&#128241;</button>';
     h += '<button class="btn bro bsm btnBorrPresDirecto" data-id="' + p.id + '">&#215;</button>';
     h += '</div></div>';
@@ -761,9 +757,18 @@ function renderLista(filtro) {
   var tarjetas = el.querySelectorAll('.pcard');
   for (var j = 0; j < tarjetas.length; j++) {
     tarjetas[j].addEventListener('click', function(e) {
-      if (e.target.classList.contains('btnBorrPresDirecto') || e.target.classList.contains('btnWAPresDirecto')) return;
+      if (e.target.classList.contains('btnBorrPresDirecto') || e.target.classList.contains('btnWAPresDirecto') || e.target.classList.contains('btnVerPresDirecto')) return;
       var id = parseInt(this.getAttribute('data-id'));
       abrirPresupuesto(id);
+    });
+  }
+
+  var btnsVer = el.querySelectorAll('.btnVerPresDirecto');
+  for (var v = 0; v < btnsVer.length; v++) {
+    btnsVer[v].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-id'));
+      exportarPDF(id);
     });
   }
 
@@ -977,8 +982,8 @@ function nuevoPresupuesto() {
   sg('fNotas').value = '';
   sg('fDtoT').value = 'percent';
   sg('fDtoV').value = 0;
-  sg('btnBorrar').classList.add('oculto');
-  sg('btnConvertirFactura').classList.add('oculto');
+  var bB = sg('btnBorrar'); if (bB) bB.classList.add('oculto');
+  var bC = sg('btnConvertirFactura'); if (bC) bC.classList.add('oculto');
   mostrarEmpresa();
   renderItems();
 }
@@ -1031,8 +1036,8 @@ function abrirPresupuesto(id) {
   sg('fNotas').value = p.nt || '';
   sg('fDtoT').value = p.dt || 'percent';
   sg('fDtoV').value = p.dv || 0;
-  sg('btnBorrar').classList.remove('oculto');
-  sg('btnConvertirFactura').classList.remove('oculto');
+  var bB = sg('btnBorrar'); if (bB) bB.classList.remove('oculto');
+  var bC = sg('btnConvertirFactura'); if (bC) bC.classList.remove('oculto');
   mostrarEmpresa();
   renderItems();
 }
@@ -1214,10 +1219,10 @@ function guardar() {
     pres.id = Date.now();
     M.presupuestos.push(pres);
     pid = pres.id;
-    sg('btnBorrar').classList.remove('oculto');
+    var bB = sg('btnBorrar'); if (bB) bB.classList.remove('oculto');
     sg('titulo').textContent = n;
   }
-  sg('btnConvertirFactura').classList.remove('oculto');
+  var bC = sg('btnConvertirFactura'); if (bC) bC.classList.remove('oculto');
   M.items = M.items.filter(function(x) { return x.pid !== pid; });
   for (var j = 0; j < its.length; j++) {
     M.items.push({ pid:pid, id:its[j].id, ci:its[j].ci, n:its[j].n, pu:its[j].pu, iva:its[j].iva, t:its[j].pu });
@@ -1374,6 +1379,7 @@ function renderListaFacturas(filtro) {
     h += '<small>' + (fItem.cli ? esc(fItem.cli) + ' &middot; ' : '') + (fItem.f || '') + '</small></div>';
     h += '<div style="display:flex;align-items:center;gap:8px">';
     h += '<div class="ptot">' + fmt(fItem.t || 0) + '</div>';
+    h += '<button class="btn baz bsm btnVerFactDirecto" data-fid="' + fItem.id + '">&#128196; Ver PDF</button>';
     h += '<button class="btn bwa bsm btnWAFactDirecto" data-fid="' + fItem.id + '" title="Enviar por WhatsApp">&#128241;</button>';
     h += '<button class="btn bro bsm btnBorrFactDirecto" data-fid="' + fItem.id + '">&#215;</button>';
     h += '</div></div>';
@@ -1385,9 +1391,18 @@ function renderListaFacturas(filtro) {
   var tarjetas = el.querySelectorAll('[data-fid]');
   for (var j = 0; j < tarjetas.length; j++) {
     tarjetas[j].addEventListener('click', function(e) {
-      if (e.target.classList.contains('btnBorrFactDirecto') || e.target.classList.contains('btnWAFactDirecto')) return;
+      if (e.target.classList.contains('btnBorrFactDirecto') || e.target.classList.contains('btnWAFactDirecto') || e.target.classList.contains('btnVerFactDirecto')) return;
       var id = parseInt(this.getAttribute('data-fid'));
       abrirFactura(id);
+    });
+  }
+
+  var btnsVerFact = el.querySelectorAll('.btnVerFactDirecto');
+  for (var v = 0; v < btnsVerFact.length; v++) {
+    btnsVerFact[v].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-fid'));
+      exportarPDFFactura(id);
     });
   }
 
@@ -1446,7 +1461,7 @@ function nuevaFactura() {
   
   sg('fFactDtoT').value = 'percent';
   sg('fFactDtoV').value = 0;
-  sg('btnBorrarFactura').classList.add('oculto');
+  var bBF = sg('btnBorrarFactura'); if (bBF) bBF.classList.add('oculto');
   renderFacturaItems();
 }
 
@@ -1480,7 +1495,7 @@ function abrirFactura(id) {
   sg('fFactNotas').value = fObj.nt || '';
   sg('fFactDtoT').value = fObj.dt || 'percent';
   sg('fFactDtoV').value = fObj.dv || 0;
-  sg('btnBorrarFactura').classList.remove('oculto');
+  var bBF2 = sg('btnBorrarFactura'); if (bBF2) bBF2.classList.remove('oculto');
   
   renderFacturaItems();
 }
@@ -1698,7 +1713,7 @@ function guardarFactura() {
     fact.id = Date.now();
     M.facturas.push(fact);
     fid = fact.id;
-    sg('btnBorrarFactura').classList.remove('oculto');
+    var bBF = sg('btnBorrarFactura'); if (bBF) bBF.classList.remove('oculto');
     sg('titulo').textContent = 'Factura ' + num;
   }
 
@@ -1743,6 +1758,30 @@ function enviarWhatsAppFactura(idTarget) {
   exportarPDFFactura(targetId);
 }
 
+function descargarPDFDoc(doc, nombreArchivo) {
+  try {
+    doc.save(nombreArchivo);
+  } catch(err) {
+    try {
+      var blob = doc.output('blob');
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function() {
+        if (a.parentNode) a.parentNode.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } catch(ex) {
+      try {
+        doc.output('dataurlnewwindow');
+      } catch(e) {}
+    }
+  }
+}
+
 function exportarPDFFactura(optId) {
   var targetId = optId || fid;
   if (!window.jspdf) {
@@ -1769,67 +1808,104 @@ function generarPDFFactura(idTarget) {
   try {
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    var pw = 190, y = 15;
+    var y = 15;
     var emp = M.empresa;
 
-    doc.setTextColor(0, 0, 0);
+    // Encabezado principal: Título y Número/Fecha
+    doc.setTextColor(21, 101, 192); // Azul corporativo
     doc.setFontSize(18); doc.setFont('helvetica', 'bold');
     doc.text('FACTURA', 15, y);
-    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-    doc.text('Nº: ' + (fObj.num || ''), 150, y);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text('Nº: ' + (fObj.num || 'SIN NÚMERO'), 195, y, { align: 'right' });
+    y += 6;
+    
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.text('Fecha Emisión: ' + (fObj.f || ''), 195, y, { align: 'right' });
+    if (fObj.fVenc) {
+      y += 5;
+      doc.text('Vencimiento: ' + fObj.fVenc, 195, y, { align: 'right' });
+    }
+    y += 4;
+    doc.setDrawColor(21, 101, 192); doc.setLineWidth(0.5);
+    doc.line(15, y, 195, y);
     y += 8;
-    doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 8;
 
-    if (emp && (emp.nombre || emp.logo)) {
-      y += 3;
-      var startX = 15;
-      if (emp.logo) {
-        try {
-          doc.addImage(emp.logo, 'JPEG', 15, y - 2, 25, 20);
-          startX = 45;
-        } catch(e) {
-          try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 25, 20); startX = 45; } catch(ex){}
-        }
+    // Bloque 2 columnas: Empresa (Izquierda) vs Cliente (Derecha)
+    var startYBlock = y;
+    
+    // Empresa (Izquierda X=15 a X=100)
+    var empX = 15;
+    if (emp && emp.logo) {
+      try {
+        doc.addImage(emp.logo, 'JPEG', 15, y - 2, 22, 18);
+        empX = 40;
+      } catch(e) {
+        try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 22, 18); empX = 40; } catch(ex){}
       }
-
-      if (emp.nombre) {
-        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-        doc.text(emp.nombre, startX, y); y += 6;
-      }
-      if (emp.nif) {
-        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-        doc.text('NIF: ' + emp.nif, startX, y); y += 5;
-      }
-      var linEmp = [emp.dir, emp.tel, emp.email].filter(function(x) { return x; }).join(' | ');
-      if (linEmp) {
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        doc.text(linEmp, startX, y); y += 5;
-      }
-      if (startX > 15 && y < 40) y = 40;
-      doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 6;
+    }
+    
+    if (emp && emp.nombre) {
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      var linEmpNom = doc.splitTextToSize(emp.nombre, 65);
+      doc.text(linEmpNom, empX, y); y += linEmpNom.length * 4.5;
+    }
+    if (emp && emp.nif) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      doc.text('NIF: ' + emp.nif, empX, y); y += 4;
+    }
+    var linEmpInfo = [emp.dir, emp.tel, emp.email].filter(function(x) { return x; }).join(' | ');
+    if (linEmpInfo) {
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      var linEmpDet = doc.splitTextToSize(linEmpInfo, 65);
+      doc.text(linEmpDet, empX, y); y += linEmpDet.length * 3.8;
     }
 
+    var endYEmp = y;
+    y = startYBlock;
+
+    // Cliente (Derecha X=110 a X=195)
     var cliObj = null;
     if (fObj.cliId) {
       for (var c = 0; c < M.clientes.length; c++) {
         if (String(M.clientes[c].id) === String(fObj.cliId)) { cliObj = M.clientes[c]; break; }
       }
     }
-    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-    if (cliObj) {
-      doc.text('Cliente: ' + cliObj.nombre, 15, y); y += 5;
-      if (cliObj.nif) { doc.text('NIF/CIF Cliente: ' + cliObj.nif, 15, y); y += 5; }
-      if (cliObj.dir) { doc.text('Dir. Fiscal: ' + cliObj.dir, 15, y); y += 5; }
-    } else if (fObj.cli) {
-      doc.text('Cliente: ' + fObj.cli, 15, y); y += 5;
+    
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(21, 101, 192);
+    doc.text('DATOS DEL CLIENTE', 110, y); y += 5;
+    doc.setTextColor(0, 0, 0);
+    
+    var cliNombre = cliObj ? cliObj.nombre : (fObj.cli || '');
+    if (cliNombre) {
+      doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
+      var linCliNom = doc.splitTextToSize(cliNombre, 85);
+      doc.text(linCliNom, 110, y); y += linCliNom.length * 4.5;
+    }
+    if (cliObj && cliObj.nif) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      doc.text('NIF/CIF: ' + cliObj.nif, 110, y); y += 4;
+    }
+    if (cliObj && cliObj.dir) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      var linCliDir = doc.splitTextToSize('Dir: ' + cliObj.dir, 85);
+      doc.text(linCliDir, 110, y); y += linCliDir.length * 4;
+    }
+    if (fObj.formaPago) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      doc.text('Forma de Pago: ' + fObj.formaPago, 110, y); y += 4;
     }
 
-    doc.text('Fecha Emisión: ' + (fObj.f || ''), 15, y);
-    if (fObj.fVenc) doc.text('Fecha Vencimiento: ' + fObj.fVenc, 120, y);
-    y += 5;
-    if (fObj.formaPago) { doc.text('Forma de Pago: ' + fObj.formaPago, 15, y); y += 5; }
-    y += 4;
+    var endYCli = y;
+    y = Math.max(endYEmp, endYCli) + 6;
 
+    doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
+    doc.line(15, y, 195, y);
+    y += 6;
+
+    // Tabla de Partidas / Conceptos
     var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
     var items = fObj.items || [];
     var catOrd = {};
@@ -1840,39 +1916,47 @@ function generarPDFFactura(idTarget) {
       var cat = cats[cc];
       var cits = items.filter(function(it) { return it.ci === cat.id; });
       if (cits.length === 0) continue;
-      if (y > 250) { doc.addPage(); y = 20; }
-      doc.setFillColor(240, 240, 240);
-      doc.rect(10, y - 3, pw, 7, 'F');
-      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text(cat.n, 15, y + 1); y += 8;
+
+      if (y > 255) { doc.addPage(); y = 20; }
+      
+      // Header de Categoría
+      doc.setFillColor(240, 244, 248);
+      doc.rect(15, y - 3, 180, 6.5, 'F');
+      doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(21, 101, 192);
+      doc.text(cat.n, 18, y + 1.5);
+      y += 8;
+      doc.setTextColor(0, 0, 0);
+
       var cst = 0;
       for (var ii = 0; ii < cits.length; ii++) {
         var it = cits[ii];
-        if (y > 265) { doc.addPage(); y = 20; }
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
         var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
-        
         var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
-        var lineasTexto = doc.splitTextToSize(textoConcepto, 150);
-        doc.text(lineasTexto, 15, y);
-        doc.text(fmt(it.pu), 172, y);
-        
-        var altoBloque = lineasTexto.length * 4;
+        var lineasTexto = doc.splitTextToSize(textoConcepto, 135);
+        var altoBloque = Math.max(lineasTexto.length * 4, 5);
+
+        if (y + altoBloque > 270) { doc.addPage(); y = 20; }
+
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+        doc.text(lineasTexto, 18, y);
+        doc.text(fmt(it.pu || 0), 195, y, { align: 'right' });
+
         cst += it.pu || 0;
-        y += Math.max(altoBloque, 5);
+        y += altoBloque + 1.5;
       }
-      doc.setFont('helvetica', 'bold');
-      doc.text('Subtotal ' + cat.n + ': ' + fmt(cst), 15, y); y += 7;
+
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      doc.text('Subtotal ' + cat.n + ':', 18, y);
+      doc.text(fmt(cst), 195, y, { align: 'right' });
+      y += 7;
     }
 
-    y += 3; doc.setDrawColor(0); doc.line(10, y, 200, y); y += 8;
+    // Totales y Desglose Financiero
     var sub = items.reduce(function(s, i) { return s + (i.pu || 0); }, 0);
-    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-    doc.text('Subtotal: ' + fmt(sub), 140, y); y += 6;
     var da = 0;
     if (fObj.dv && fObj.dv > 0) {
       da = fObj.dt === 'percent' ? sub * (fObj.dv / 100) : fObj.dv;
-      doc.text('Descuento: -' + fmt(da), 140, y); y += 6;
     }
 
     var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
@@ -1888,21 +1972,46 @@ function generarPDFFactura(idTarget) {
     }
 
     var tipos = Object.keys(desgloseIva).sort(function(a,b){ return b-a; });
-    for (var k = 0; k < tipos.length; k++) {
-      var tr = tipos[k];
-      doc.text('IVA (' + tr + '%): ' + fmt(desgloseIva[tr]), 140, y); y += 6;
+    var altoTotales = 25 + (tipos.length * 5);
+    if (y + altoTotales > 270) { doc.addPage(); y = 20; }
+
+    y += 2;
+    doc.setDrawColor(21, 101, 192); doc.setLineWidth(0.4);
+    doc.line(15, y, 195, y); y += 6;
+
+    // Resumen en 2 columnas alineadas a la derecha
+    doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
+    doc.text('Subtotal:', 125, y);
+    doc.text(fmt(sub), 195, y, { align: 'right' }); y += 5.5;
+
+    if (da > 0) {
+      var txtDto = fObj.dt === 'percent' ? 'Descuento (' + fObj.dv + '%):' : 'Descuento:';
+      doc.text(txtDto, 125, y);
+      doc.text('-' + fmt(da), 195, y, { align: 'right' }); y += 5.5;
     }
 
-    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL FACTURA: ' + fmt((sub - da) + totalIvaAcc), 140, y);
+    for (var k = 0; k < tipos.length; k++) {
+      var tr = tipos[k];
+      doc.text('IVA (' + tr + '%):', 125, y);
+      doc.text(fmt(desgloseIva[tr]), 195, y, { align: 'right' }); y += 5.5;
+    }
+
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(21, 101, 192);
+    doc.text('TOTAL FACTURA:', 125, y);
+    doc.text(fmt((sub - da) + totalIvaAcc), 195, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    // Notas e Instrucciones de Pago
     if (fObj.nt) {
-      y += 10;
-      doc.setFontSize(9); doc.setFont('helvetica', 'italic');
       var linNotas = doc.splitTextToSize('Notas / Datos Pago: ' + fObj.nt, 180);
+      var altoNotas = linNotas.length * 4 + 8;
+      if (y + altoNotas > 270) { doc.addPage(); y = 20; } else { y += 10; }
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'italic');
       doc.text(linNotas, 15, y);
     }
 
-    doc.save('Factura_' + (fObj.num || 'sin_numero').replace(/[^a-z0-9]/gi, '_') + '.pdf');
+    descargarPDFDoc(doc, 'Factura_' + (fObj.num || 'sin_numero').replace(/[^a-z0-9]/gi, '_') + '.pdf');
     toast('PDF de Factura generado');
   } catch(e) { toast('Error PDF Factura: ' + e.message); }
 }
@@ -2065,67 +2174,100 @@ function generarPDF(idTarget) {
     if (M.presupuestos[i].id === targetId) { p = M.presupuestos[i]; break; }
   }
   if (!p) { toast('Guarda el presupuesto primero'); return; }
+
   try {
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    var pw = 190, y = 15;
+    var y = 15;
     var emp = M.empresa;
 
-    doc.setTextColor(0, 0, 0);
+    // Encabezado principal
+    doc.setTextColor(21, 101, 192); // Azul corporativo
     doc.setFontSize(16); doc.setFont('helvetica', 'bold');
     doc.text('PRESUPUESTO DE REFORMAS', 15, y);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.text('Fecha: ' + (p.f || ''), 195, y, { align: 'right' });
+    y += 6;
+    doc.setDrawColor(21, 101, 192); doc.setLineWidth(0.5);
+    doc.line(15, y, 195, y);
     y += 8;
-    doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 8;
 
-    if (emp && (emp.nombre || emp.logo)) {
-      y += 3;
-      var startX = 15;
-      if (emp.logo) {
-        try {
-          doc.addImage(emp.logo, 'JPEG', 15, y - 2, 25, 20);
-          startX = 45;
-        } catch(e) {
-          try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 25, 20); startX = 45; } catch(ex){}
-        }
+    // Bloque 2 columnas: Empresa (Izquierda) vs Cliente / Presupuesto (Derecha)
+    var startYBlock = y;
+    
+    // Empresa (Izquierda X=15 a X=100)
+    var empX = 15;
+    if (emp && emp.logo) {
+      try {
+        doc.addImage(emp.logo, 'JPEG', 15, y - 2, 22, 18);
+        empX = 40;
+      } catch(e) {
+        try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 22, 18); empX = 40; } catch(ex){}
       }
-
-      if (emp.nombre) {
-        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-        doc.text(emp.nombre, startX, y); y += 6;
-      }
-      if (emp.nif) {
-        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-        doc.text('NIF: ' + emp.nif, startX, y); y += 5;
-      }
-      var linEmp = [emp.dir, emp.tel, emp.email].filter(function(x) { return x; }).join(' | ');
-      if (linEmp) {
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        doc.text(linEmp, startX, y); y += 5;
-      }
-      if (startX > 15 && y < 40) y = 40;
-      doc.setDrawColor(200, 200, 200); doc.line(10, y, 200, y); y += 6;
+    }
+    
+    if (emp && emp.nombre) {
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      var linEmpNom = doc.splitTextToSize(emp.nombre, 65);
+      doc.text(linEmpNom, empX, y); y += linEmpNom.length * 4.5;
+    }
+    if (emp && emp.nif) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      doc.text('NIF: ' + emp.nif, empX, y); y += 4;
+    }
+    var linEmpInfo = [emp.dir, emp.tel, emp.email].filter(function(x) { return x; }).join(' | ');
+    if (linEmpInfo) {
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      var linEmpDet = doc.splitTextToSize(linEmpInfo, 65);
+      doc.text(linEmpDet, empX, y); y += linEmpDet.length * 3.8;
     }
 
-    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-    doc.text('Presupuesto: ' + (p.n || ''), 15, y); y += 6;
+    var endYEmp = y;
+    y = startYBlock;
 
+    // Cliente (Derecha X=110 a X=195)
     var cliObj = null;
     if (p.cliId) {
       for (var c = 0; c < M.clientes.length; c++) {
         if (String(M.clientes[c].id) === String(p.cliId)) { cliObj = M.clientes[c]; break; }
       }
     }
-    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-    if (cliObj) {
-      doc.text('Cliente: ' + cliObj.nombre, 15, y); y += 5;
-      if (cliObj.nif) { doc.text('NIF/CIF Cliente: ' + cliObj.nif, 15, y); y += 5; }
-      if (cliObj.dir) { doc.text('Dir. Fiscal: ' + cliObj.dir, 15, y); y += 5; }
-    } else if (p.cli) {
-      doc.text('Cliente: ' + p.cli, 15, y); y += 5;
+    
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(21, 101, 192);
+    doc.text('DATOS DEL PRESUPUESTO', 110, y); y += 5;
+    doc.setTextColor(0, 0, 0);
+
+    doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
+    var linPresNom = doc.splitTextToSize('Nombre: ' + (p.n || 'Sin nombre'), 85);
+    doc.text(linPresNom, 110, y); y += linPresNom.length * 4.5;
+    
+    var cliNombre = cliObj ? cliObj.nombre : (p.cli || '');
+    if (cliNombre) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      var linCliNom = doc.splitTextToSize('Cliente: ' + cliNombre, 85);
+      doc.text(linCliNom, 110, y); y += linCliNom.length * 4;
+    }
+    if (cliObj && cliObj.nif) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      doc.text('NIF/CIF: ' + cliObj.nif, 110, y); y += 4;
+    }
+    if (cliObj && cliObj.dir) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+      var linCliDir = doc.splitTextToSize('Dir: ' + cliObj.dir, 85);
+      doc.text(linCliDir, 110, y); y += linCliDir.length * 4;
     }
 
-    doc.text('Fecha: ' + (p.f || ''), 15, y); y += 8;
+    var endYCli = y;
+    y = Math.max(endYEmp, endYCli) + 6;
 
+    doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
+    doc.line(15, y, 195, y);
+    y += 6;
+
+    // Tabla de Partidas / Conceptos
     var cats = CATS.slice().sort(function(a, b) { return a.o - b.o; });
     var items = M.items.filter(function(x) { return x.pid === targetId; });
     var catOrd = {};
@@ -2136,39 +2278,47 @@ function generarPDF(idTarget) {
       var cat = cats[cc];
       var cits = items.filter(function(it) { return it.ci === cat.id; });
       if (cits.length === 0) continue;
-      if (y > 250) { doc.addPage(); y = 20; }
-      doc.setFillColor(240, 240, 240);
-      doc.rect(10, y - 3, pw, 7, 'F');
-      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text(cat.n, 15, y + 1); y += 8;
+
+      if (y > 255) { doc.addPage(); y = 20; }
+      
+      // Header de Categoría
+      doc.setFillColor(240, 244, 248);
+      doc.rect(15, y - 3, 180, 6.5, 'F');
+      doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(21, 101, 192);
+      doc.text(cat.n, 18, y + 1.5);
+      y += 8;
+      doc.setTextColor(0, 0, 0);
+
       var cst = 0;
       for (var ii = 0; ii < cits.length; ii++) {
         var it = cits[ii];
-        if (y > 265) { doc.addPage(); y = 20; }
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
         var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
-        
         var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
-        var lineasTexto = doc.splitTextToSize(textoConcepto, 150);
-        doc.text(lineasTexto, 15, y);
-        doc.text(fmt(it.pu), 172, y);
-        
-        var altoBloque = lineasTexto.length * 4;
+        var lineasTexto = doc.splitTextToSize(textoConcepto, 135);
+        var altoBloque = Math.max(lineasTexto.length * 4, 5);
+
+        if (y + altoBloque > 270) { doc.addPage(); y = 20; }
+
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+        doc.text(lineasTexto, 18, y);
+        doc.text(fmt(it.pu || 0), 195, y, { align: 'right' });
+
         cst += it.pu || 0;
-        y += Math.max(altoBloque, 5);
+        y += altoBloque + 1.5;
       }
-      doc.setFont('helvetica', 'bold');
-      doc.text('Subtotal ' + cat.n + ': ' + fmt(cst), 15, y); y += 7;
+
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      doc.text('Subtotal ' + cat.n + ':', 18, y);
+      doc.text(fmt(cst), 195, y, { align: 'right' });
+      y += 7;
     }
 
-    y += 3; doc.setDrawColor(0); doc.line(10, y, 200, y); y += 8;
+    // Totales y Desglose Financiero
     var sub = items.reduce(function(s, i) { return s + (i.pu || 0); }, 0);
-    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-    doc.text('Subtotal: ' + fmt(sub), 140, y); y += 6;
     var da = 0;
     if (p.dv && p.dv > 0) {
       da = p.dt === 'percent' ? sub * (p.dv / 100) : p.dv;
-      doc.text('Descuento: -' + fmt(da), 140, y); y += 6;
     }
 
     var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
@@ -2184,16 +2334,46 @@ function generarPDF(idTarget) {
     }
 
     var tipos = Object.keys(desgloseIva).sort(function(a,b){ return b-a; });
-    for (var k = 0; k < tipos.length; k++) {
-      var tr = tipos[k];
-      doc.text('IVA (' + tr + '%): ' + fmt(desgloseIva[tr]), 140, y); y += 6;
+    var altoTotales = 25 + (tipos.length * 5);
+    if (y + altoTotales > 270) { doc.addPage(); y = 20; }
+
+    y += 2;
+    doc.setDrawColor(21, 101, 192); doc.setLineWidth(0.4);
+    doc.line(15, y, 195, y); y += 6;
+
+    // Resumen en 2 columnas alineadas a la derecha
+    doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
+    doc.text('Subtotal:', 125, y);
+    doc.text(fmt(sub), 195, y, { align: 'right' }); y += 5.5;
+
+    if (da > 0) {
+      var txtDto = p.dt === 'percent' ? 'Descuento (' + p.dv + '%):' : 'Descuento:';
+      doc.text(txtDto, 125, y);
+      doc.text('-' + fmt(da), 195, y, { align: 'right' }); y += 5.5;
     }
 
-    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL: ' + fmt((sub - da) + totalIvaAcc), 140, y);
-    if (p.nt) { y += 10; doc.setFontSize(9); doc.setFont('helvetica', 'italic'); doc.text('Notas: ' + p.nt, 15, y); }
+    for (var k = 0; k < tipos.length; k++) {
+      var tr = tipos[k];
+      doc.text('IVA (' + tr + '%):', 125, y);
+      doc.text(fmt(desgloseIva[tr]), 195, y, { align: 'right' }); y += 5.5;
+    }
 
-    doc.save('Presupuesto_' + (p.n || 'sin_nombre').replace(/[^a-z0-9]/gi, '_') + '_' + Date.now() + '.pdf');
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(21, 101, 192);
+    doc.text('TOTAL PRESUPUESTO:', 125, y);
+    doc.text(fmt((sub - da) + totalIvaAcc), 195, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    // Notas Adicionales
+    if (p.nt) {
+      var linNotas = doc.splitTextToSize('Notas: ' + p.nt, 180);
+      var altoNotas = linNotas.length * 4 + 8;
+      if (y + altoNotas > 270) { doc.addPage(); y = 20; } else { y += 10; }
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'italic');
+      doc.text(linNotas, 15, y);
+    }
+
+    descargarPDFDoc(doc, 'Presupuesto_' + (p.n || 'sin_nombre').replace(/[^a-z0-9]/gi, '_') + '_' + Date.now() + '.pdf');
     toast('PDF generado');
   } catch(e) { toast('Error PDF: ' + e.message); }
 }
@@ -2216,17 +2396,47 @@ function asignarEventos() {
   sg('btnVolver').addEventListener('click', irInicio);
   sg('btnMenu').addEventListener('click', abrirMenu);
 
-  sg('btnGuardar').addEventListener('click', guardar);
-  sg('btnPDF').addEventListener('click', function() { exportarPDF(); });
-  sg('btnWhatsApp').addEventListener('click', function() { enviarWhatsAppPresupuesto(); });
-  sg('btnConvertirFactura').addEventListener('click', function() { convertirPresupuestoAFactura(); });
-  sg('btnPlantilla').addEventListener('click', guardarPlantilla);
-  sg('btnBorrar').addEventListener('click', borrarPresupuesto);
+  sg('btnGuardar').addEventListener('click', function() {
+    guardar();
+    var savedId = pid;
+    if (savedId) {
+      exportarPDF(savedId);
+    }
+    irPresupuestosLista();
+  });
 
-  sg('btnGuardarFactura').addEventListener('click', guardarFactura);
-  sg('btnPDFFactura').addEventListener('click', function() { exportarPDFFactura(); });
-  sg('btnWAFactura').addEventListener('click', function() { enviarWhatsAppFactura(); });
-  sg('btnBorrarFactura').addEventListener('click', borrarFactura);
+  var bCanc = sg('btnCancelarPresupuesto');
+  if (bCanc) {
+    bCanc.addEventListener('click', function() {
+      irPresupuestosLista();
+    });
+  }
+
+  var bPDF = sg('btnPDF'); if (bPDF) bPDF.addEventListener('click', function() { exportarPDF(); });
+  var bWA = sg('btnWhatsApp'); if (bWA) bWA.addEventListener('click', function() { enviarWhatsAppPresupuesto(); });
+  var bCF = sg('btnConvertirFactura'); if (bCF) bCF.addEventListener('click', function() { convertirPresupuestoAFactura(); });
+  var bPl = sg('btnPlantilla'); if (bPl) bPl.addEventListener('click', guardarPlantilla);
+  var bB = sg('btnBorrar'); if (bB) bB.addEventListener('click', borrarPresupuesto);
+
+  sg('btnGuardarFactura').addEventListener('click', function() {
+    guardarFactura();
+    var savedFid = fid;
+    if (savedFid) {
+      exportarPDFFactura(savedFid);
+    }
+    irFacturas();
+  });
+
+  var bCFact = sg('btnCancelarFactura');
+  if (bCFact) {
+    bCFact.addEventListener('click', function() {
+      irFacturas();
+    });
+  }
+
+  var bPDFFact = sg('btnPDFFactura'); if (bPDFFact) bPDFFact.addEventListener('click', function() { exportarPDFFactura(); });
+  var bWAFact = sg('btnWAFactura'); if (bWAFact) bWAFact.addEventListener('click', function() { enviarWhatsAppFactura(); });
+  var bBFact = sg('btnBorrarFactura'); if (bBFact) bBFact.addEventListener('click', borrarFactura);
 
   sg('fDtoT').addEventListener('change', calcResumen);
   sg('fDtoV').addEventListener('input', calcResumen);

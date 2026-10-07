@@ -71,64 +71,73 @@ async function exportToPDF() {
 
       let catTotal = 0
       for (const item of catItems) {
-        if (y > 270) { doc.addPage(); y = 20 }
+        const textLines = doc.splitTextToSize(String(item.name || '-'), 135)
+        const blockHeight = Math.max(textLines.length * 4, 5)
+        if (y + blockHeight > 270) { doc.addPage(); y = 20 }
         doc.setFontSize(8)
         doc.setFont('helvetica', 'normal')
-        doc.text(String(item.name || '-'), 15, y)
-        doc.text(`${item.quantity || 0} ${item.unit || 'ud'}`, 110, y)
-        doc.text(fmtPrice(item.unitPrice), 140, y)
-        doc.text(fmtPrice(item.total), 175, y)
+        doc.text(textLines, 15, y)
+        doc.text(fmtPrice(item.total), 195, y, { align: 'right' })
         catTotal += item.total || 0
-        y += 5
+        y += blockHeight + 1.5
       }
 
       doc.setFont('helvetica', 'bold')
-      doc.text(`Subtotal ${cat.name}: ${fmtPrice(catTotal)}`, 15, y)
+      doc.text(`Subtotal ${cat.name}:`, 15, y)
+      doc.text(fmtPrice(catTotal), 195, y, { align: 'right' })
       y += 7
     }
 
-    y += 5
-    doc.setDrawColor(0, 0, 0)
-    doc.line(10, y, 200, y)
-    y += 8
+    y += 3
+    doc.setDrawColor(21, 101, 192)
+    doc.line(15, y, 195, y)
+    y += 6
 
     const subtotal = items.reduce((s, i) => s + (i.total || 0), 0)
-    doc.setFontSize(11)
+    doc.setFontSize(9.5)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Subtotal: ${fmtPrice(subtotal)}`, 140, y)
-    y += 6
+    doc.text('Subtotal:', 125, y)
+    doc.text(fmtPrice(subtotal), 195, y, { align: 'right' })
+    y += 5.5
 
     let discountAmount = 0
     if (budget.discountValue && budget.discountValue > 0) {
       if (budget.discountType === 'percent') {
         discountAmount = subtotal * (budget.discountValue / 100)
-        doc.text(`Descuento (${budget.discountValue}%): -${fmtPrice(discountAmount)}`, 140, y)
+        doc.text(`Descuento (${budget.discountValue}%):`, 125, y)
+        doc.text(`-${fmtPrice(discountAmount)}`, 195, y, { align: 'right' })
       } else {
         discountAmount = budget.discountValue
-        doc.text(`Descuento: -${fmtPrice(discountAmount)}`, 140, y)
+        doc.text('Descuento:', 125, y)
+        doc.text(`-${fmtPrice(discountAmount)}`, 195, y, { align: 'right' })
       }
-      y += 6
+      y += 5.5
     }
 
     const afterDiscount = subtotal - discountAmount
     let taxAmount = 0
     if (budget.taxRate && budget.taxRate > 0) {
       taxAmount = afterDiscount * (budget.taxRate / 100)
-      doc.text(`IVA (${budget.taxRate}%): ${fmtPrice(taxAmount)}`, 140, y)
-      y += 6
+      doc.text(`IVA (${budget.taxRate}%):`, 125, y)
+      doc.text(fmtPrice(taxAmount), 195, y, { align: 'right' })
+      y += 5.5
     }
 
     const total = afterDiscount + taxAmount
-    doc.setFontSize(14)
+    doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
-    doc.text(`TOTAL: ${fmtPrice(total)}`, 140, y)
+    doc.setTextColor(21, 101, 192)
+    doc.text('TOTAL:', 125, y)
+    doc.text(fmtPrice(total), 195, y, { align: 'right' })
+    doc.setTextColor(0, 0, 0)
     y += 10
 
     if (budget.notes) {
-      y += 5
+      const linNotas = doc.splitTextToSize(`Notas: ${budget.notes}`, 180)
+      if (y + linNotas.length * 4 > 270) { doc.addPage(); y = 20 }
       doc.setFontSize(9)
       doc.setFont('helvetica', 'italic')
-      doc.text(`Notas: ${budget.notes}`, 15, y)
+      doc.text(linNotas, 15, y)
     }
 
     doc.save(`Presupuesto_${(budget.name || 'sin_nombre').replace(/[^a-zA-Z0-9_\-]/g, '_')}.pdf`)
