@@ -108,7 +108,7 @@ function newBudget() {
     client: '',
     date: new Date().toISOString().slice(0, 10),
     notes: '',
-    taxRate: 21,
+    taxRate: 0,
     discountType: 'percent',
     discountValue: 0
   }

@@ -237,10 +237,10 @@ textarea{resize:vertical;min-height:60px}
         <div class="grp">
           <label>IVA del Presupuesto</label>
           <select id="fIvaDefecto">
-            <option value="21">21% IVA General (Normal)</option>
-            <option value="10">10% IVA Reducido (Comunidades / Reforma)</option>
+            <option value="0" selected>0% Exento de IVA</option>
             <option value="4">4% IVA Superreducido</option>
-            <option value="0">0% Exento de IVA</option>
+            <option value="10">10% IVA Reducido (Comunidades / Reforma)</option>
+            <option value="21">21% IVA General (Normal)</option>
           </select>
         </div>
       </div>
@@ -281,8 +281,9 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
     <div class="bgrp">
-      <button class="btn baz" id="btnGuardar" style="flex:1; max-width:200px">&#128190; Guardar</button>
-      <button class="btn bor" id="btnCancelarPresupuesto" style="flex:1; max-width:200px">Cancelar</button>
+      <button class="btn baz" id="btnGuardar" style="flex:1; max-width:180px">&#128190; Guardar</button>
+      <button class="btn baz oculto" id="btnConvertirFactura" style="background:#2E7D32">&#128195; Convertir a Factura</button>
+      <button class="btn bor" id="btnCancelarPresupuesto" style="flex:1; max-width:180px">Cancelar</button>
     </div>
   </div>
 
@@ -345,10 +346,10 @@ textarea{resize:vertical;min-height:60px}
       <div class="grp" style="margin-top:8px">
         <label>IVA de la Factura</label>
         <select id="fFactIvaDefecto">
-          <option value="21">21% IVA General (Normal)</option>
-          <option value="10">10% IVA Reducido (Comunidades / Reforma)</option>
+          <option value="0" selected>0% Exento de IVA</option>
           <option value="4">4% IVA Superreducido</option>
-          <option value="0">0% Exento de IVA</option>
+          <option value="10">10% IVA Reducido (Comunidades / Reforma)</option>
+          <option value="21">21% IVA General (Normal)</option>
         </select>
       </div>
       <div id="infoFactClienteSel" class="oculto" style="margin-top:8px;padding:8px;background:#e3f2fd;border-radius:6px;font-size:13px;color:var(--az)"></div>
@@ -512,7 +513,7 @@ var M = {
   facturas: [],
   plantillas: [],
   clientes: [],
-  empresa: { nombre:'', nif:'', dir:'', tel:'', email:'', iban:'', bizum:'', iva:21, mon:'EUR', logo:'' }
+  empresa: { nombre:'', nif:'', dir:'', tel:'', email:'', iban:'', bizum:'', iva:0, mon:'EUR', logo:'' }
 };
 
 var pid = null;
@@ -743,9 +744,10 @@ function renderLista(filtro) {
     h += '<div class="pcard" data-id="' + p.id + '">';
     h += '<div><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><h3 style="margin:0">' + esc(p.n || 'Sin nombre') + '</h3>' + renderBadgeEstado(p.estado) + '</div>';
     h += '<small>' + (p.cli ? esc(p.cli) + ' &middot; ' : '') + (p.f || '') + '</small></div>';
-    h += '<div style="display:flex;align-items:center;gap:8px">';
-    h += '<div class="ptot">' + fmt(p.t || 0) + '</div>';
+    h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+    h += '<div class="ptot" style="margin-right:4px">' + fmt(p.t || 0) + '</div>';
     h += '<button class="btn baz bsm btnVerPresDirecto" data-id="' + p.id + '">&#128196; Ver PDF</button>';
+    h += '<button class="btn bna bsm btnConvertirFactDirecto" data-id="' + p.id + '" style="background:#2E7D32" title="Convertir a Factura">&#128195; Convertir a Factura</button>';
     h += '<button class="btn bwa bsm btnWAPresDirecto" data-id="' + p.id + '" title="Enviar por WhatsApp">&#128241;</button>';
     h += '<button class="btn bro bsm btnBorrPresDirecto" data-id="' + p.id + '">&#215;</button>';
     h += '</div></div>';
@@ -757,7 +759,7 @@ function renderLista(filtro) {
   var tarjetas = el.querySelectorAll('.pcard');
   for (var j = 0; j < tarjetas.length; j++) {
     tarjetas[j].addEventListener('click', function(e) {
-      if (e.target.classList.contains('btnBorrPresDirecto') || e.target.classList.contains('btnWAPresDirecto') || e.target.classList.contains('btnVerPresDirecto')) return;
+      if (e.target.classList.contains('btnBorrPresDirecto') || e.target.classList.contains('btnWAPresDirecto') || e.target.classList.contains('btnVerPresDirecto') || e.target.classList.contains('btnConvertirFactDirecto')) return;
       var id = parseInt(this.getAttribute('data-id'));
       abrirPresupuesto(id);
     });
@@ -769,6 +771,15 @@ function renderLista(filtro) {
       e.stopPropagation();
       var id = parseInt(this.getAttribute('data-id'));
       exportarPDF(id);
+    });
+  }
+
+  var btnsConv = el.querySelectorAll('.btnConvertirFactDirecto');
+  for (var c = 0; c < btnsConv.length; c++) {
+    btnsConv[c].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(this.getAttribute('data-id'));
+      convertirPresupuestoAFactura(id);
     });
   }
 
@@ -978,7 +989,7 @@ function nuevoPresupuesto() {
   mostrarInfoClienteSel();
   sg('fFecha').value = new Date().toISOString().slice(0, 10);
   sg('fEstado').value = 'borrador';
-  sg('fIvaDefecto').value = M.empresa.iva || 21;
+  sg('fIvaDefecto').value = (M.empresa.iva != null ? M.empresa.iva : 0);
   sg('fNotas').value = '';
   sg('fDtoT').value = 'percent';
   sg('fDtoV').value = 0;
@@ -1445,7 +1456,7 @@ function nuevaFactura() {
   poblarSelectClientes('fFactClienteSelect', '');
   mostrarInfoFactClienteSel();
   sg('fFactFormaPago').value = 'Transferencia Bancaria';
-  sg('fFactIvaDefecto').value = M.empresa.iva || 21;
+  sg('fFactIvaDefecto').value = (M.empresa.iva != null ? M.empresa.iva : 0);
   
   var fechaHoy = new Date().toISOString().slice(0, 10);
   var dVenc = new Date();
