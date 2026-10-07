@@ -1023,7 +1023,7 @@ function abrirPresupuesto(id) {
   if (!p) { toast('No encontrado'); return; }
   pid = id;
   its = [];
-  var ivaPres = p.ivaDefecto || M.empresa.iva || 21;
+  var ivaPres = (p.ivaDefecto != null ? p.ivaDefecto : (M.empresa.iva != null ? M.empresa.iva : 0));
   for (var j = 0; j < M.items.length; j++) {
     if (M.items[j].pid === id) {
       its.push({
@@ -1094,7 +1094,7 @@ function renderItem(it, cats) {
             (cats[i].id === it.ci ? ' selected' : '') + '>' +
             cats[i].n + '</option>';
   }
-  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva || 21));
+  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva != null ? M.empresa.iva : 0));
   return '<div class="item-card" data-itid="' + it.id + '">' +
     '<div class="item-top-row">' +
       '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
@@ -1106,10 +1106,10 @@ function renderItem(it, cats) {
     '<div class="item-bottom-row">' +
       '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio €">' +
       '<select data-campo="iva">' +
-        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
-        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
-        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
         '<option value="0"' + (ivaVal == 0 ? ' selected' : '') + '>0% IVA</option>' +
+        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
+        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
+        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
       '</select>' +
     '</div>' +
   '</div>';
@@ -1140,13 +1140,14 @@ function manejarBorrarItem(e) {
 }
 
 function addItem() {
-  var ivaDef = parseFloat(sg('fIvaDefecto').value) || M.empresa.iva || 21;
+  var ivaDef = (sg('fIvaDefecto') && sg('fIvaDefecto').value != null ? parseFloat(sg('fIvaDefecto').value) : (M.empresa.iva != null ? M.empresa.iva : 0));
+  if (isNaN(ivaDef)) ivaDef = 0;
   its.push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), ci: 'c2', n: '', pu: 0, iva: ivaDef, t: 0 });
   renderItems();
 }
 
 function aplicarIvaGeneralPresupuesto(nuevoIva) {
-  var rate = parseFloat(nuevoIva) || 21;
+  var rate = (nuevoIva != null && !isNaN(parseFloat(nuevoIva))) ? parseFloat(nuevoIva) : 0;
   for (var i = 0; i < its.length; i++) {
     its[i].iva = rate;
   }
@@ -1172,7 +1173,8 @@ function calcResumen() {
   var totalIvaAcc = 0;
   for (var j = 0; j < its.length; j++) {
     var precioNetoItem = (its[j].pu || 0) * factorDto;
-    var tipoIvaItem = (its[j].iva != null ? its[j].iva : (parseFloat(sg('fIvaDefecto').value) || M.empresa.iva || 21));
+    var valIvaDef = (sg('fIvaDefecto') && sg('fIvaDefecto').value !== '') ? parseFloat(sg('fIvaDefecto').value) : null;
+    var tipoIvaItem = (its[j].iva != null ? its[j].iva : (valIvaDef != null && !isNaN(valIvaDef) ? valIvaDef : (M.empresa.iva != null ? M.empresa.iva : 0)));
     var cuotaIvaItem = precioNetoItem * (tipoIvaItem / 100);
     
     if (!desgloseIva[tipoIvaItem]) desgloseIva[tipoIvaItem] = 0;
@@ -1194,7 +1196,7 @@ function calcResumen() {
     htmlIva += '<div class="sr"><span>IVA (' + tRate + '%)</span><span>' + fmt(desgloseIva[tRate]) + '</span></div>';
   }
   if (tipos.length === 0) {
-    htmlIva = '<div class="sr"><span>IVA (21%)</span><span>' + fmt(0) + '</span></div>';
+    htmlIva = '<div class="sr"><span>IVA (0%)</span><span>' + fmt(0) + '</span></div>';
   }
   sg('desgloseIvaContainer').innerHTML = htmlIva;
 
@@ -1213,7 +1215,8 @@ function guardar() {
   }
   var f   = sg('fFecha').value || '';
   var est = sg('fEstado').value || 'borrador';
-  var ivaDef = parseFloat(sg('fIvaDefecto').value) || M.empresa.iva || 21;
+  var valIvaDefG = (sg('fIvaDefecto') && sg('fIvaDefecto').value !== '') ? parseFloat(sg('fIvaDefecto').value) : null;
+  var ivaDef = (valIvaDefG != null && !isNaN(valIvaDefG)) ? valIvaDefG : (M.empresa.iva != null ? M.empresa.iva : 0);
   var nt  = (sg('fNotas').value || '').trim();
   var dt  = sg('fDtoT').value;
   var dv  = parseFloat(sg('fDtoV').value) || 0;
@@ -1303,7 +1306,7 @@ function convertirPresupuestoAFactura(idTarget) {
       ci: itemsP[j].ci,
       n: itemsP[j].n,
       pu: itemsP[j].pu,
-      iva: itemsP[j].iva != null ? itemsP[j].iva : (M.empresa.iva || 21),
+      iva: itemsP[j].iva != null ? itemsP[j].iva : (M.empresa.iva != null ? M.empresa.iva : 0),
       t: itemsP[j].pu || 0
     });
   }
@@ -1483,7 +1486,7 @@ function abrirFactura(id) {
   }
   if (!fObj) { toast('Factura no encontrada'); return; }
   fid = id;
-  var ivaFact = fObj.ivaDefecto || M.empresa.iva || 21;
+  var ivaFact = (fObj.ivaDefecto != null ? fObj.ivaDefecto : (M.empresa.iva != null ? M.empresa.iva : 0));
   factItems = (fObj.items || []).map(function(it) {
     return {
       id: it.id, ci: it.ci, n: it.n, pu: it.pu,
@@ -1570,7 +1573,7 @@ function renderFacturaItem(it, cats) {
             (cats[i].id === it.ci ? ' selected' : '') + '>' +
             cats[i].n + '</option>';
   }
-  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva || 21));
+  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva != null ? M.empresa.iva : 0));
   return '<div class="item-card" data-itid="' + it.id + '">' +
     '<div class="item-top-row">' +
       '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
@@ -1582,10 +1585,10 @@ function renderFacturaItem(it, cats) {
     '<div class="item-bottom-row">' +
       '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio €">' +
       '<select data-campo="iva">' +
-        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
-        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
-        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
         '<option value="0"' + (ivaVal == 0 ? ' selected' : '') + '>0% IVA</option>' +
+        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
+        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
+        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
       '</select>' +
     '</div>' +
   '</div>';
@@ -1616,13 +1619,14 @@ function manejarBorrarFacturaItem(e) {
 }
 
 function addFacturaItem() {
-  var ivaDef = parseFloat(sg('fFactIvaDefecto').value) || M.empresa.iva || 21;
+  var valFactIvaDef = sg('fFactIvaDefecto') && sg('fFactIvaDefecto').value !== '' ? parseFloat(sg('fFactIvaDefecto').value) : null;
+  var ivaDef = (valFactIvaDef != null && !isNaN(valFactIvaDef)) ? valFactIvaDef : (M.empresa.iva != null ? M.empresa.iva : 0);
   factItems.push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), ci: 'c2', n: '', pu: 0, iva: ivaDef, t: 0 });
   renderFacturaItems();
 }
 
 function aplicarIvaGeneralFactura(nuevoIva) {
-  var rate = parseFloat(nuevoIva) || 21;
+  var rate = (nuevoIva != null && !isNaN(parseFloat(nuevoIva))) ? parseFloat(nuevoIva) : 0;
   for (var i = 0; i < factItems.length; i++) {
     factItems[i].iva = rate;
   }
@@ -1648,7 +1652,8 @@ function calcFacturaResumen() {
   var totalIvaAcc = 0;
   for (var j = 0; j < factItems.length; j++) {
     var precioNetoItem = (factItems[j].pu || 0) * factorDto;
-    var tipoIvaItem = (factItems[j].iva != null ? factItems[j].iva : (parseFloat(sg('fFactIvaDefecto').value) || M.empresa.iva || 21));
+    var valFactIvaDef = sg('fFactIvaDefecto') && sg('fFactIvaDefecto').value !== '' ? parseFloat(sg('fFactIvaDefecto').value) : null;
+    var tipoIvaItem = (factItems[j].iva != null ? factItems[j].iva : (valFactIvaDef != null && !isNaN(valFactIvaDef) ? valFactIvaDef : (M.empresa.iva != null ? M.empresa.iva : 0)));
     var cuotaIvaItem = precioNetoItem * (tipoIvaItem / 100);
     
     if (!desgloseIva[tipoIvaItem]) desgloseIva[tipoIvaItem] = 0;
@@ -1670,7 +1675,7 @@ function calcFacturaResumen() {
     htmlIva += '<div class="sr"><span>IVA (' + tRate + '%)</span><span>' + fmt(desgloseIva[tRate]) + '</span></div>';
   }
   if (tipos.length === 0) {
-    htmlIva = '<div class="sr"><span>IVA (21%)</span><span>' + fmt(0) + '</span></div>';
+    htmlIva = '<div class="sr"><span>IVA (0%)</span><span>' + fmt(0) + '</span></div>';
   }
   sg('factDesgloseIvaContainer').innerHTML = htmlIva;
 
@@ -1689,7 +1694,8 @@ function guardarFactura() {
   }
   var est = sg('fFactEstado').value || 'pendiente';
   var fp = sg('fFactFormaPago').value || 'Transferencia Bancaria';
-  var ivaDef = parseFloat(sg('fFactIvaDefecto').value) || M.empresa.iva || 21;
+  var valFactIvaDefG = sg('fFactIvaDefecto') && sg('fFactIvaDefecto').value !== '' ? parseFloat(sg('fFactIvaDefecto').value) : null;
+  var ivaDef = (valFactIvaDefG != null && !isNaN(valFactIvaDefG)) ? valFactIvaDefG : (M.empresa.iva != null ? M.empresa.iva : 0);
   var f = sg('fFactFecha').value || '';
   var fV = sg('fFactVenc').value || '';
   var nt = (sg('fFactNotas').value || '').trim();
@@ -1942,7 +1948,7 @@ function generarPDFFactura(idTarget) {
       var cst = 0;
       for (var ii = 0; ii < cits.length; ii++) {
         var it = cits[ii];
-        var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
+        var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva != null ? M.empresa.iva : 0)) + '%';
         var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
         var lineasTexto = doc.splitTextToSize(textoConcepto, 135);
         var altoBloque = Math.max(lineasTexto.length * 4, 5);
@@ -1975,7 +1981,7 @@ function generarPDFFactura(idTarget) {
     var totalIvaAcc = 0;
     for (var j = 0; j < items.length; j++) {
       var precioNeto = (items[j].pu || 0) * factorDto;
-      var tRate = (items[j].iva != null ? items[j].iva : (M.empresa.iva || 21));
+      var tRate = (items[j].iva != null ? items[j].iva : (M.empresa.iva != null ? M.empresa.iva : 0));
       var cIva = precioNeto * (tRate / 100);
       if (!desgloseIva[tRate]) desgloseIva[tRate] = 0;
       desgloseIva[tRate] += cIva;
@@ -2304,7 +2310,7 @@ function generarPDF(idTarget) {
       var cst = 0;
       for (var ii = 0; ii < cits.length; ii++) {
         var it = cits[ii];
-        var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
+        var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva != null ? M.empresa.iva : 0)) + '%';
         var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
         var lineasTexto = doc.splitTextToSize(textoConcepto, 135);
         var altoBloque = Math.max(lineasTexto.length * 4, 5);
@@ -2337,7 +2343,7 @@ function generarPDF(idTarget) {
     var totalIvaAcc = 0;
     for (var j = 0; j < items.length; j++) {
       var precioNeto = (items[j].pu || 0) * factorDto;
-      var tRate = (items[j].iva != null ? items[j].iva : (M.empresa.iva || 21));
+      var tRate = (items[j].iva != null ? items[j].iva : (M.empresa.iva != null ? M.empresa.iva : 0));
       var cIva = precioNeto * (tRate / 100);
       if (!desgloseIva[tRate]) desgloseIva[tRate] = 0;
       desgloseIva[tRate] += cIva;
