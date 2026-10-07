@@ -593,6 +593,7 @@ function cargarDatos() {
     if (d.plantillas) M.plantillas = d.plantillas;
     if (d.clientes) M.clientes = d.clientes;
     if (d.empresa) M.empresa = d.empresa;
+    M.empresa.iva = 0;
   } catch(e) {}
 }
 
@@ -989,7 +990,7 @@ function nuevoPresupuesto() {
   mostrarInfoClienteSel();
   sg('fFecha').value = new Date().toISOString().slice(0, 10);
   sg('fEstado').value = 'borrador';
-  sg('fIvaDefecto').value = (M.empresa.iva != null ? M.empresa.iva : 0);
+  sg('fIvaDefecto').value = 0;
   sg('fNotas').value = '';
   sg('fDtoT').value = 'percent';
   sg('fDtoV').value = 0;
@@ -1023,7 +1024,7 @@ function abrirPresupuesto(id) {
   if (!p) { toast('No encontrado'); return; }
   pid = id;
   its = [];
-  var ivaPres = (p.ivaDefecto != null ? p.ivaDefecto : (M.empresa.iva != null ? M.empresa.iva : 0));
+  var ivaPres = (p.ivaDefecto != null ? p.ivaDefecto : 0);
   for (var j = 0; j < M.items.length; j++) {
     if (M.items[j].pid === id) {
       its.push({
@@ -1094,7 +1095,7 @@ function renderItem(it, cats) {
             (cats[i].id === it.ci ? ' selected' : '') + '>' +
             cats[i].n + '</option>';
   }
-  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva != null ? M.empresa.iva : 0));
+  var ivaVal = (it.iva != null ? it.iva : 0);
   return '<div class="item-card" data-itid="' + it.id + '">' +
     '<div class="item-top-row">' +
       '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
@@ -1140,7 +1141,7 @@ function manejarBorrarItem(e) {
 }
 
 function addItem() {
-  var ivaDef = (sg('fIvaDefecto') && sg('fIvaDefecto').value != null ? parseFloat(sg('fIvaDefecto').value) : (M.empresa.iva != null ? M.empresa.iva : 0));
+  var ivaDef = (sg('fIvaDefecto') && sg('fIvaDefecto').value !== '') ? parseFloat(sg('fIvaDefecto').value) : 0;
   if (isNaN(ivaDef)) ivaDef = 0;
   its.push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), ci: 'c2', n: '', pu: 0, iva: ivaDef, t: 0 });
   renderItems();
@@ -1174,7 +1175,7 @@ function calcResumen() {
   for (var j = 0; j < its.length; j++) {
     var precioNetoItem = (its[j].pu || 0) * factorDto;
     var valIvaDef = (sg('fIvaDefecto') && sg('fIvaDefecto').value !== '') ? parseFloat(sg('fIvaDefecto').value) : null;
-    var tipoIvaItem = (its[j].iva != null ? its[j].iva : (valIvaDef != null && !isNaN(valIvaDef) ? valIvaDef : (M.empresa.iva != null ? M.empresa.iva : 0)));
+    var tipoIvaItem = (its[j].iva != null ? its[j].iva : (valIvaDef != null && !isNaN(valIvaDef) ? valIvaDef : 0));
     var cuotaIvaItem = precioNetoItem * (tipoIvaItem / 100);
     
     if (!desgloseIva[tipoIvaItem]) desgloseIva[tipoIvaItem] = 0;
@@ -1216,7 +1217,7 @@ function guardar() {
   var f   = sg('fFecha').value || '';
   var est = sg('fEstado').value || 'borrador';
   var valIvaDefG = (sg('fIvaDefecto') && sg('fIvaDefecto').value !== '') ? parseFloat(sg('fIvaDefecto').value) : null;
-  var ivaDef = (valIvaDefG != null && !isNaN(valIvaDefG)) ? valIvaDefG : (M.empresa.iva != null ? M.empresa.iva : 0);
+  var ivaDef = (valIvaDefG != null && !isNaN(valIvaDefG)) ? valIvaDefG : 0;
   var nt  = (sg('fNotas').value || '').trim();
   var dt  = sg('fDtoT').value;
   var dv  = parseFloat(sg('fDtoV').value) || 0;
@@ -1459,7 +1460,7 @@ function nuevaFactura() {
   poblarSelectClientes('fFactClienteSelect', '');
   mostrarInfoFactClienteSel();
   sg('fFactFormaPago').value = 'Transferencia Bancaria';
-  sg('fFactIvaDefecto').value = (M.empresa.iva != null ? M.empresa.iva : 0);
+  sg('fFactIvaDefecto').value = 0;
   
   var fechaHoy = new Date().toISOString().slice(0, 10);
   var dVenc = new Date();
@@ -1486,7 +1487,7 @@ function abrirFactura(id) {
   }
   if (!fObj) { toast('Factura no encontrada'); return; }
   fid = id;
-  var ivaFact = (fObj.ivaDefecto != null ? fObj.ivaDefecto : (M.empresa.iva != null ? M.empresa.iva : 0));
+  var ivaFact = (fObj.ivaDefecto != null ? fObj.ivaDefecto : 0);
   factItems = (fObj.items || []).map(function(it) {
     return {
       id: it.id, ci: it.ci, n: it.n, pu: it.pu,
@@ -1573,7 +1574,7 @@ function renderFacturaItem(it, cats) {
             (cats[i].id === it.ci ? ' selected' : '') + '>' +
             cats[i].n + '</option>';
   }
-  var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva != null ? M.empresa.iva : 0));
+  var ivaVal = (it.iva != null ? it.iva : 0);
   return '<div class="item-card" data-itid="' + it.id + '">' +
     '<div class="item-top-row">' +
       '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
@@ -1620,7 +1621,7 @@ function manejarBorrarFacturaItem(e) {
 
 function addFacturaItem() {
   var valFactIvaDef = sg('fFactIvaDefecto') && sg('fFactIvaDefecto').value !== '' ? parseFloat(sg('fFactIvaDefecto').value) : null;
-  var ivaDef = (valFactIvaDef != null && !isNaN(valFactIvaDef)) ? valFactIvaDef : (M.empresa.iva != null ? M.empresa.iva : 0);
+  var ivaDef = (valFactIvaDef != null && !isNaN(valFactIvaDef)) ? valFactIvaDef : 0;
   factItems.push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), ci: 'c2', n: '', pu: 0, iva: ivaDef, t: 0 });
   renderFacturaItems();
 }
@@ -1653,7 +1654,7 @@ function calcFacturaResumen() {
   for (var j = 0; j < factItems.length; j++) {
     var precioNetoItem = (factItems[j].pu || 0) * factorDto;
     var valFactIvaDef = sg('fFactIvaDefecto') && sg('fFactIvaDefecto').value !== '' ? parseFloat(sg('fFactIvaDefecto').value) : null;
-    var tipoIvaItem = (factItems[j].iva != null ? factItems[j].iva : (valFactIvaDef != null && !isNaN(valFactIvaDef) ? valFactIvaDef : (M.empresa.iva != null ? M.empresa.iva : 0)));
+    var tipoIvaItem = (factItems[j].iva != null ? factItems[j].iva : (valFactIvaDef != null && !isNaN(valFactIvaDef) ? valFactIvaDef : 0));
     var cuotaIvaItem = precioNetoItem * (tipoIvaItem / 100);
     
     if (!desgloseIva[tipoIvaItem]) desgloseIva[tipoIvaItem] = 0;
@@ -1695,7 +1696,7 @@ function guardarFactura() {
   var est = sg('fFactEstado').value || 'pendiente';
   var fp = sg('fFactFormaPago').value || 'Transferencia Bancaria';
   var valFactIvaDefG = sg('fFactIvaDefecto') && sg('fFactIvaDefecto').value !== '' ? parseFloat(sg('fFactIvaDefecto').value) : null;
-  var ivaDef = (valFactIvaDefG != null && !isNaN(valFactIvaDefG)) ? valFactIvaDefG : (M.empresa.iva != null ? M.empresa.iva : 0);
+  var ivaDef = (valFactIvaDefG != null && !isNaN(valFactIvaDefG)) ? valFactIvaDefG : 0;
   var f = sg('fFactFecha').value || '';
   var fV = sg('fFactVenc').value || '';
   var nt = (sg('fFactNotas').value || '').trim();
