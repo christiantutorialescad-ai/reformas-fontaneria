@@ -263,15 +263,12 @@ textarea{resize:vertical;min-height:60px}
     <div class="card">
       <div class="r2">
         <div class="grp">
-          <label>Dto. tipo</label>
-          <select id="fDtoT">
-            <option value="percent">%</option>
-            <option value="fixed">&#8364; Fijo</option>
-          </select>
+          <label>Descuento (%)</label>
+          <input type="number" id="fDtoPct" value="0" min="0" max="100" step="0.01" placeholder="0 %">
         </div>
         <div class="grp">
-          <label>Descuento global</label>
-          <input type="number" id="fDtoV" value="0" min="0" step="0.01">
+          <label>Descuento (€ Importe)</label>
+          <input type="number" id="fDtoImp" value="0" min="0" step="0.01" placeholder="0,00 €">
         </div>
       </div>
       <div class="grp">
@@ -365,21 +362,18 @@ textarea{resize:vertical;min-height:60px}
       <div class="sr"><span>Subtotal</span><span id="rFactSub">0,00 &#8364;</span></div>
       <div class="sr oculto" id="rFactDtoFila"><span>Descuento</span><span id="rFactDto">0,00 &#8364;</span></div>
       <div id="factDesgloseIvaContainer"></div>
-      <div class="sr stot"><span>TOTAL FACTURA</span><span id="rFactTot">0,00 &#8364;</span></div>
+      <div class="sr stot"><span>TOTAL</span><span id="rFactTot">0,00 &#8364;</span></div>
     </div>
 
     <div class="card">
       <div class="r2">
         <div class="grp">
-          <label>Dto. tipo</label>
-          <select id="fFactDtoT">
-            <option value="percent">%</option>
-            <option value="fixed">&#8364; Fijo</option>
-          </select>
+          <label>Descuento (%)</label>
+          <input type="number" id="fFactDtoPct" value="0" min="0" max="100" step="0.01" placeholder="0 %">
         </div>
         <div class="grp">
-          <label>Descuento global</label>
-          <input type="number" id="fFactDtoV" value="0" min="0" step="0.01">
+          <label>Descuento (€ Importe)</label>
+          <input type="number" id="fFactDtoImp" value="0" min="0" step="0.01" placeholder="0,00 €">
         </div>
       </div>
       <div class="grp">
@@ -522,6 +516,8 @@ var fid = null;
 var factItems = [];
 var mon = 'EUR';
 var logoTempBase64 = '';
+var presDtoTipo = 'fixed';
+var factDtoTipo = 'fixed';
 
 var ELEMENTOS_POR_PAGINA = 5;
 var pagPresupuestoAct = 1;
@@ -992,8 +988,9 @@ function nuevoPresupuesto() {
   sg('fEstado').value = 'borrador';
   sg('fIvaDefecto').value = 0;
   sg('fNotas').value = '';
-  sg('fDtoT').value = 'percent';
-  sg('fDtoV').value = 0;
+  presDtoTipo = 'fixed';
+  if (sg('fDtoPct')) sg('fDtoPct').value = 0;
+  if (sg('fDtoImp')) sg('fDtoImp').value = 0;
   var bB = sg('btnBorrar'); if (bB) bB.classList.add('oculto');
   var bC = sg('btnConvertirFactura'); if (bC) bC.classList.add('oculto');
   mostrarEmpresa();
@@ -1046,8 +1043,21 @@ function abrirPresupuesto(id) {
   sg('fEstado').value = p.estado || 'borrador';
   sg('fIvaDefecto').value = ivaPres;
   sg('fNotas').value = p.nt || '';
-  sg('fDtoT').value = p.dt || 'percent';
-  sg('fDtoV').value = p.dv || 0;
+  var subP = 0;
+  for (var k = 0; k < its.length; k++) { subP += (its[k].pu || 0); }
+  if (p.dt === 'percent') {
+    presDtoTipo = 'percent';
+    var pctVal = p.dtoPct != null ? p.dtoPct : (p.dv || 0);
+    var impVal = p.dtoImp != null ? p.dtoImp : (subP > 0 ? (subP * (pctVal / 100)) : 0);
+    if (sg('fDtoPct')) sg('fDtoPct').value = pctVal || 0;
+    if (sg('fDtoImp')) sg('fDtoImp').value = impVal ? Number(impVal.toFixed(2)) : 0;
+  } else {
+    presDtoTipo = 'fixed';
+    var impVal = p.dtoImp != null ? p.dtoImp : (p.dv || 0);
+    var pctVal = p.dtoPct != null ? p.dtoPct : (subP > 0 ? ((impVal / subP) * 100) : 0);
+    if (sg('fDtoImp')) sg('fDtoImp').value = impVal || 0;
+    if (sg('fDtoPct')) sg('fDtoPct').value = pctVal ? Number(pctVal.toFixed(2)) : 0;
+  }
   var bB = sg('btnBorrar'); if (bB) bB.classList.remove('oculto');
   var bC = sg('btnConvertirFactura'); if (bC) bC.classList.remove('oculto');
   mostrarEmpresa();
@@ -1155,6 +1165,32 @@ function aplicarIvaGeneralPresupuesto(nuevoIva) {
   renderItems();
 }
 
+function manejarDtoPctPresupuesto() {
+  presDtoTipo = 'percent';
+  var pct = parseFloat(sg('fDtoPct').value) || 0;
+  var sub = 0;
+  for (var i = 0; i < its.length; i++) sub += (its[i].pu || 0);
+  if (sub > 0 && pct > 0) {
+    sg('fDtoImp').value = Number((sub * (pct / 100)).toFixed(2));
+  } else {
+    sg('fDtoImp').value = 0;
+  }
+  calcResumen();
+}
+
+function manejarDtoImpPresupuesto() {
+  presDtoTipo = 'fixed';
+  var imp = parseFloat(sg('fDtoImp').value) || 0;
+  var sub = 0;
+  for (var i = 0; i < its.length; i++) sub += (its[i].pu || 0);
+  if (sub > 0 && imp > 0) {
+    sg('fDtoPct').value = Number(((imp / sub) * 100).toFixed(2));
+  } else {
+    sg('fDtoPct').value = 0;
+  }
+  calcResumen();
+}
+
 function calcResumen() {
   var sub = 0;
   var desgloseIva = {};
@@ -1164,11 +1200,24 @@ function calcResumen() {
     sub += p;
   }
 
-  var dtEl = sg('fDtoT'), dvEl = sg('fDtoV');
-  if (!dtEl || !dvEl) return 0;
-  var dt = dtEl.value;
-  var dv = parseFloat(dvEl.value) || 0;
-  var da = dv > 0 ? (dt === 'percent' ? sub * (dv / 100) : dv) : 0;
+  var da = 0;
+  var pctEl = sg('fDtoPct'), impEl = sg('fDtoImp');
+  if (pctEl && impEl) {
+    if (presDtoTipo === 'percent') {
+      var pct = parseFloat(pctEl.value) || 0;
+      da = pct > 0 ? (sub * (pct / 100)) : 0;
+      if (document.activeElement !== impEl) {
+        impEl.value = da > 0 ? Number(da.toFixed(2)) : 0;
+      }
+    } else {
+      var imp = parseFloat(impEl.value) || 0;
+      da = imp > 0 ? imp : 0;
+      if (document.activeElement !== pctEl) {
+        pctEl.value = (sub > 0 && da > 0) ? Number(((da / sub) * 100).toFixed(2)) : 0;
+      }
+    }
+  }
+  if (da > sub) da = sub;
   var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
 
   var totalIvaAcc = 0;
@@ -1219,10 +1268,12 @@ function guardar() {
   var valIvaDefG = (sg('fIvaDefecto') && sg('fIvaDefecto').value !== '') ? parseFloat(sg('fIvaDefecto').value) : null;
   var ivaDef = (valIvaDefG != null && !isNaN(valIvaDefG)) ? valIvaDefG : 0;
   var nt  = (sg('fNotas').value || '').trim();
-  var dt  = sg('fDtoT').value;
-  var dv  = parseFloat(sg('fDtoV').value) || 0;
+  var dt  = presDtoTipo;
+  var dv  = presDtoTipo === 'percent' ? (parseFloat(sg('fDtoPct').value) || 0) : (parseFloat(sg('fDtoImp').value) || 0);
+  var dtoPct = parseFloat(sg('fDtoPct').value) || 0;
+  var dtoImp = parseFloat(sg('fDtoImp').value) || 0;
   var tot = calcResumen();
-  var pres = { n:n, cliId:cliId, cli:cliNombre, f:f, estado:est, ivaDefecto:ivaDef, nt:nt, dt:dt, dv:dv, t:tot };
+  var pres = { n:n, cliId:cliId, cli:cliNombre, f:f, estado:est, ivaDefecto:ivaDef, nt:nt, dt:dt, dv:dv, dtoPct:dtoPct, dtoImp:dtoImp, t:tot };
   if (pid) {
     pres.id = pid;
     var enc = false;
@@ -1327,8 +1378,10 @@ function convertirPresupuestoAFactura(idTarget) {
     fVenc: fechaVenc,
     formaPago: 'Transferencia Bancaria',
     estado: 'pendiente',
-    dt: p.dt || 'percent',
+    dt: p.dt || 'fixed',
     dv: p.dv || 0,
+    dtoPct: p.dtoPct != null ? p.dtoPct : (p.dt === 'percent' ? p.dv : 0),
+    dtoImp: p.dtoImp != null ? p.dtoImp : (p.dt === 'fixed' ? p.dv : 0),
     nt: p.nt || ('Factura procedente de presupuesto: ' + (p.n || '')),
     t: p.t || 0,
     items: factItemsSnap
@@ -1474,8 +1527,9 @@ function nuevaFactura() {
   if (M.empresa.bizum) notaPago += 'Bizum: ' + M.empresa.bizum + '\n';
   sg('fFactNotas').value = notaPago.trim();
   
-  sg('fFactDtoT').value = 'percent';
-  sg('fFactDtoV').value = 0;
+  factDtoTipo = 'fixed';
+  if (sg('fFactDtoPct')) sg('fFactDtoPct').value = 0;
+  if (sg('fFactDtoImp')) sg('fFactDtoImp').value = 0;
   var bBF = sg('btnBorrarFactura'); if (bBF) bBF.classList.add('oculto');
   renderFacturaItems();
 }
@@ -1508,8 +1562,21 @@ function abrirFactura(id) {
   sg('fFactFecha').value = fObj.f || '';
   sg('fFactVenc').value = fObj.fVenc || '';
   sg('fFactNotas').value = fObj.nt || '';
-  sg('fFactDtoT').value = fObj.dt || 'percent';
-  sg('fFactDtoV').value = fObj.dv || 0;
+  var subF = 0;
+  for (var k = 0; k < factItems.length; k++) { subF += (factItems[k].pu || 0); }
+  if (fObj.dt === 'percent') {
+    factDtoTipo = 'percent';
+    var pctVal = fObj.dtoPct != null ? fObj.dtoPct : (fObj.dv || 0);
+    var impVal = fObj.dtoImp != null ? fObj.dtoImp : (subF > 0 ? (subF * (pctVal / 100)) : 0);
+    if (sg('fFactDtoPct')) sg('fFactDtoPct').value = pctVal || 0;
+    if (sg('fFactDtoImp')) sg('fFactDtoImp').value = impVal ? Number(impVal.toFixed(2)) : 0;
+  } else {
+    factDtoTipo = 'fixed';
+    var impVal = fObj.dtoImp != null ? fObj.dtoImp : (fObj.dv || 0);
+    var pctVal = fObj.dtoPct != null ? fObj.dtoPct : (subF > 0 ? ((impVal / subF) * 100) : 0);
+    if (sg('fFactDtoImp')) sg('fFactDtoImp').value = impVal || 0;
+    if (sg('fFactDtoPct')) sg('fFactDtoPct').value = pctVal ? Number(pctVal.toFixed(2)) : 0;
+  }
   var bBF2 = sg('btnBorrarFactura'); if (bBF2) bBF2.classList.remove('oculto');
   
   renderFacturaItems();
@@ -1634,6 +1701,32 @@ function aplicarIvaGeneralFactura(nuevoIva) {
   renderFacturaItems();
 }
 
+function manejarDtoPctFactura() {
+  factDtoTipo = 'percent';
+  var pct = parseFloat(sg('fFactDtoPct').value) || 0;
+  var sub = 0;
+  for (var i = 0; i < factItems.length; i++) sub += (factItems[i].pu || 0);
+  if (sub > 0 && pct > 0) {
+    sg('fFactDtoImp').value = Number((sub * (pct / 100)).toFixed(2));
+  } else {
+    sg('fFactDtoImp').value = 0;
+  }
+  calcFacturaResumen();
+}
+
+function manejarDtoImpFactura() {
+  factDtoTipo = 'fixed';
+  var imp = parseFloat(sg('fFactDtoImp').value) || 0;
+  var sub = 0;
+  for (var i = 0; i < factItems.length; i++) sub += (factItems[i].pu || 0);
+  if (sub > 0 && imp > 0) {
+    sg('fFactDtoPct').value = Number(((imp / sub) * 100).toFixed(2));
+  } else {
+    sg('fFactDtoPct').value = 0;
+  }
+  calcFacturaResumen();
+}
+
 function calcFacturaResumen() {
   var sub = 0;
   var desgloseIva = {};
@@ -1643,11 +1736,24 @@ function calcFacturaResumen() {
     sub += p;
   }
 
-  var dtEl = sg('fFactDtoT'), dvEl = sg('fFactDtoV');
-  if (!dtEl || !dvEl) return 0;
-  var dt = dtEl.value;
-  var dv = parseFloat(dvEl.value) || 0;
-  var da = dv > 0 ? (dt === 'percent' ? sub * (dv / 100) : dv) : 0;
+  var da = 0;
+  var pctEl = sg('fFactDtoPct'), impEl = sg('fFactDtoImp');
+  if (pctEl && impEl) {
+    if (factDtoTipo === 'percent') {
+      var pct = parseFloat(pctEl.value) || 0;
+      da = pct > 0 ? (sub * (pct / 100)) : 0;
+      if (document.activeElement !== impEl) {
+        impEl.value = da > 0 ? Number(da.toFixed(2)) : 0;
+      }
+    } else {
+      var imp = parseFloat(impEl.value) || 0;
+      da = imp > 0 ? imp : 0;
+      if (document.activeElement !== pctEl) {
+        pctEl.value = (sub > 0 && da > 0) ? Number(((da / sub) * 100).toFixed(2)) : 0;
+      }
+    }
+  }
+  if (da > sub) da = sub;
   var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
 
   var totalIvaAcc = 0;
@@ -1700,8 +1806,10 @@ function guardarFactura() {
   var f = sg('fFactFecha').value || '';
   var fV = sg('fFactVenc').value || '';
   var nt = (sg('fFactNotas').value || '').trim();
-  var dt = sg('fFactDtoT').value;
-  var dv = parseFloat(sg('fFactDtoV').value) || 0;
+  var dt = factDtoTipo;
+  var dv = factDtoTipo === 'percent' ? (parseFloat(sg('fFactDtoPct').value) || 0) : (parseFloat(sg('fFactDtoImp').value) || 0);
+  var dtoPct = parseFloat(sg('fFactDtoPct').value) || 0;
+  var dtoImp = parseFloat(sg('fFactDtoImp').value) || 0;
   var tot = calcFacturaResumen();
 
   var fact = {
@@ -1716,6 +1824,8 @@ function guardarFactura() {
     nt: nt,
     dt: dt,
     dv: dv,
+    dtoPct: dtoPct,
+    dtoImp: dtoImp,
     t: tot,
     items: factItems.slice()
   };
@@ -1973,9 +2083,14 @@ function generarPDFFactura(idTarget) {
     // Totales y Desglose Financiero
     var sub = items.reduce(function(s, i) { return s + (i.pu || 0); }, 0);
     var da = 0;
-    if (fObj.dv && fObj.dv > 0) {
-      da = fObj.dt === 'percent' ? sub * (fObj.dv / 100) : fObj.dv;
+    if (fObj.dt === 'percent') {
+      var pct = fObj.dtoPct != null ? fObj.dtoPct : (fObj.dv || 0);
+      da = pct > 0 ? (sub * (pct / 100)) : 0;
+    } else {
+      var imp = fObj.dtoImp != null ? fObj.dtoImp : (fObj.dv || 0);
+      da = imp > 0 ? imp : 0;
     }
+    if (da > sub) da = sub;
 
     var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
     var desgloseIva = {};
@@ -2003,7 +2118,8 @@ function generarPDFFactura(idTarget) {
     doc.text(fmt(sub), 195, y, { align: 'right' }); y += 5.5;
 
     if (da > 0) {
-      var txtDto = fObj.dt === 'percent' ? 'Descuento (' + fObj.dv + '%):' : 'Descuento:';
+      var pctNum = fObj.dtoPct != null ? fObj.dtoPct : (fObj.dt === 'percent' ? fObj.dv : 0);
+      var txtDto = (fObj.dt === 'percent' && pctNum > 0) ? 'Descuento (' + pctNum + '%):' : 'Descuento:';
       doc.text(txtDto, 125, y);
       doc.text('-' + fmt(da), 195, y, { align: 'right' }); y += 5.5;
     }
@@ -2016,7 +2132,7 @@ function generarPDFFactura(idTarget) {
 
     doc.setFontSize(12); doc.setFont('helvetica', 'bold');
     doc.setTextColor(21, 101, 192);
-    doc.text('TOTAL FACTURA:', 125, y);
+    doc.text('TOTAL:', 125, y);
     doc.text(fmt((sub - da) + totalIvaAcc), 195, y, { align: 'right' });
     doc.setTextColor(0, 0, 0);
 
@@ -2335,9 +2451,14 @@ function generarPDF(idTarget) {
     // Totales y Desglose Financiero
     var sub = items.reduce(function(s, i) { return s + (i.pu || 0); }, 0);
     var da = 0;
-    if (p.dv && p.dv > 0) {
-      da = p.dt === 'percent' ? sub * (p.dv / 100) : p.dv;
+    if (p.dt === 'percent') {
+      var pct = p.dtoPct != null ? p.dtoPct : (p.dv || 0);
+      da = pct > 0 ? (sub * (pct / 100)) : 0;
+    } else {
+      var imp = p.dtoImp != null ? p.dtoImp : (p.dv || 0);
+      da = imp > 0 ? imp : 0;
     }
+    if (da > sub) da = sub;
 
     var factorDto = sub > 0 ? ((sub - da) / sub) : 1;
     var desgloseIva = {};
@@ -2365,7 +2486,8 @@ function generarPDF(idTarget) {
     doc.text(fmt(sub), 195, y, { align: 'right' }); y += 5.5;
 
     if (da > 0) {
-      var txtDto = p.dt === 'percent' ? 'Descuento (' + p.dv + '%):' : 'Descuento:';
+      var pctNum = p.dtoPct != null ? p.dtoPct : (p.dt === 'percent' ? p.dv : 0);
+      var txtDto = (p.dt === 'percent' && pctNum > 0) ? 'Descuento (' + pctNum + '%):' : 'Descuento:';
       doc.text(txtDto, 125, y);
       doc.text('-' + fmt(da), 195, y, { align: 'right' }); y += 5.5;
     }
@@ -2378,7 +2500,7 @@ function generarPDF(idTarget) {
 
     doc.setFontSize(12); doc.setFont('helvetica', 'bold');
     doc.setTextColor(21, 101, 192);
-    doc.text('TOTAL PRESUPUESTO:', 125, y);
+    doc.text('TOTAL:', 125, y);
     doc.text(fmt((sub - da) + totalIvaAcc), 195, y, { align: 'right' });
     doc.setTextColor(0, 0, 0);
 
@@ -2456,12 +2578,12 @@ function asignarEventos() {
   var bWAFact = sg('btnWAFactura'); if (bWAFact) bWAFact.addEventListener('click', function() { enviarWhatsAppFactura(); });
   var bBFact = sg('btnBorrarFactura'); if (bBFact) bBFact.addEventListener('click', borrarFactura);
 
-  sg('fDtoT').addEventListener('change', calcResumen);
-  sg('fDtoV').addEventListener('input', calcResumen);
+  sg('fDtoPct').addEventListener('input', manejarDtoPctPresupuesto);
+  sg('fDtoImp').addEventListener('input', manejarDtoImpPresupuesto);
   sg('fIvaDefecto').addEventListener('change', function() { aplicarIvaGeneralPresupuesto(this.value); });
 
-  sg('fFactDtoT').addEventListener('change', calcFacturaResumen);
-  sg('fFactDtoV').addEventListener('input', calcFacturaResumen);
+  sg('fFactDtoPct').addEventListener('input', manejarDtoPctFactura);
+  sg('fFactDtoImp').addEventListener('input', manejarDtoImpFactura);
   sg('fFactIvaDefecto').addEventListener('change', function() { aplicarIvaGeneralFactura(this.value); });
 
   sg('fClienteSelect').addEventListener('change', mostrarInfoClienteSel);
