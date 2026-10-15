@@ -1960,17 +1960,38 @@ function generarPDFFactura(idTarget) {
     doc.line(15, y, 195, y);
     y += 8;
 
-    // Bloque 2 columnas: Empresa (Izquierda) vs Cliente (Derecha)
+    // Bloque 2 columnas: Empresa (Izquierda) vs Cliente (Extremo Derecho)
     var startYBlock = y;
     
-    // Empresa (Izquierda X=15 a X=100)
+    // Empresa (Izquierda X=15 a X=110)
     var empX = 15;
+    var logoH = 0;
     if (emp && emp.logo) {
       try {
-        doc.addImage(emp.logo, 'JPEG', 15, y - 2, 22, 18);
-        empX = 40;
+        var logoProps = doc.getImageProperties(emp.logo);
+        var maxW = 32;
+        var maxH = 22;
+        var w = maxW;
+        var h = maxH;
+        if (logoProps && logoProps.width && logoProps.height) {
+          var ratio = logoProps.width / logoProps.height;
+          w = maxW;
+          h = w / ratio;
+          if (h > maxH) {
+            h = maxH;
+            w = h * ratio;
+          }
+        }
+        var fmt = (logoProps && logoProps.fileType) ? logoProps.fileType : 'PNG';
+        doc.addImage(emp.logo, fmt, 15, y - 1, w, h, undefined, 'FAST');
+        empX = 15 + w + 5;
+        logoH = h;
       } catch(e) {
-        try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 22, 18); empX = 40; } catch(ex){}
+        try {
+          doc.addImage(emp.logo, 15, y - 1, 24, 20);
+          empX = 44;
+          logoH = 20;
+        } catch(ex){}
       }
     }
     
@@ -1990,10 +2011,10 @@ function generarPDFFactura(idTarget) {
       doc.text(linEmpDet, empX, y); y += linEmpDet.length * 3.8;
     }
 
-    var endYEmp = y;
+    var endYLeft = Math.max(y, startYBlock + logoH + 2);
     y = startYBlock;
 
-    // Cliente (Derecha X=110 a X=195)
+    // Cliente (Extremo derecho, alineado a X=195)
     var cliObj = null;
     if (fObj.cliId) {
       for (var c = 0; c < M.clientes.length; c++) {
@@ -2003,31 +2024,43 @@ function generarPDFFactura(idTarget) {
     
     doc.setFontSize(9); doc.setFont('helvetica', 'bold');
     doc.setTextColor(21, 101, 192);
-    doc.text('DATOS DEL CLIENTE', 110, y); y += 5;
+    doc.text('DATOS DEL CLIENTE', 195, y, { align: 'right' }); y += 5;
     doc.setTextColor(0, 0, 0);
     
     var cliNombre = cliObj ? cliObj.nombre : (fObj.cli || '');
     if (cliNombre) {
       doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
-      var linCliNom = doc.splitTextToSize(cliNombre, 85);
-      doc.text(linCliNom, 110, y); y += linCliNom.length * 4.5;
+      var linCliNom = doc.splitTextToSize(cliNombre, 80);
+      doc.text(linCliNom, 195, y, { align: 'right' });
+      y += linCliNom.length * 4.5;
     }
     if (cliObj && cliObj.nif) {
       doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-      doc.text('NIF/CIF: ' + cliObj.nif, 110, y); y += 4;
+      doc.text('NIF/CIF: ' + cliObj.nif, 195, y, { align: 'right' });
+      y += 4;
     }
     if (cliObj && cliObj.dir) {
+      var dirLimpia = (cliObj.dir || '').replace(/^(dir|direcci[oó]n)\s*:\s*/i, '').trim();
+      if (dirLimpia) {
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+        var linCliDir = doc.splitTextToSize('Dirección: ' + dirLimpia, 80);
+        doc.text(linCliDir, 195, y, { align: 'right' });
+        y += linCliDir.length * 4;
+      }
+    }
+    if (cliObj && cliObj.tel) {
       doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-      var linCliDir = doc.splitTextToSize('Dir: ' + cliObj.dir, 85);
-      doc.text(linCliDir, 110, y); y += linCliDir.length * 4;
+      doc.text('Tel: ' + cliObj.tel, 195, y, { align: 'right' });
+      y += 4;
     }
     if (fObj.formaPago) {
       doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-      doc.text('Forma de Pago: ' + fObj.formaPago, 110, y); y += 4;
+      doc.text('Forma de Pago: ' + fObj.formaPago, 195, y, { align: 'right' });
+      y += 4;
     }
 
     var endYCli = y;
-    y = Math.max(endYEmp, endYCli) + 6;
+    y = Math.max(endYLeft, endYCli) + 6;
 
     doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
     doc.line(15, y, 195, y);
@@ -2328,17 +2361,38 @@ function generarPDF(idTarget) {
     doc.line(15, y, 195, y);
     y += 8;
 
-    // Bloque 2 columnas: Empresa (Izquierda) vs Cliente / Presupuesto (Derecha)
+    // Bloque 2 columnas: Empresa (Izquierda) vs Cliente / Presupuesto (Extremo Derecho)
     var startYBlock = y;
     
-    // Empresa (Izquierda X=15 a X=100)
+    // Empresa (Izquierda X=15 a X=110)
     var empX = 15;
+    var logoH = 0;
     if (emp && emp.logo) {
       try {
-        doc.addImage(emp.logo, 'JPEG', 15, y - 2, 22, 18);
-        empX = 40;
+        var logoProps = doc.getImageProperties(emp.logo);
+        var maxW = 32;
+        var maxH = 22;
+        var w = maxW;
+        var h = maxH;
+        if (logoProps && logoProps.width && logoProps.height) {
+          var ratio = logoProps.width / logoProps.height;
+          w = maxW;
+          h = w / ratio;
+          if (h > maxH) {
+            h = maxH;
+            w = h * ratio;
+          }
+        }
+        var fmt = (logoProps && logoProps.fileType) ? logoProps.fileType : 'PNG';
+        doc.addImage(emp.logo, fmt, 15, y - 1, w, h, undefined, 'FAST');
+        empX = 15 + w + 5;
+        logoH = h;
       } catch(e) {
-        try { doc.addImage(emp.logo, 'PNG', 15, y - 2, 22, 18); empX = 40; } catch(ex){}
+        try {
+          doc.addImage(emp.logo, 15, y - 1, 24, 20);
+          empX = 44;
+          logoH = 20;
+        } catch(ex){}
       }
     }
     
@@ -2358,10 +2412,10 @@ function generarPDF(idTarget) {
       doc.text(linEmpDet, empX, y); y += linEmpDet.length * 3.8;
     }
 
-    var endYEmp = y;
+    var endYLeft = Math.max(y, startYBlock + logoH + 2);
     y = startYBlock;
 
-    // Cliente (Derecha X=110 a X=195)
+    // Cliente (Extremo derecho, alineado a X=195)
     var cliObj = null;
     if (p.cliId) {
       for (var c = 0; c < M.clientes.length; c++) {
@@ -2371,31 +2425,44 @@ function generarPDF(idTarget) {
     
     doc.setFontSize(9); doc.setFont('helvetica', 'bold');
     doc.setTextColor(21, 101, 192);
-    doc.text('DATOS DEL PRESUPUESTO', 110, y); y += 5;
+    doc.text('DATOS DEL CLIENTE', 195, y, { align: 'right' }); y += 5;
     doc.setTextColor(0, 0, 0);
 
-    doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
-    var linPresNom = doc.splitTextToSize('Nombre: ' + (p.n || 'Sin nombre'), 85);
-    doc.text(linPresNom, 110, y); y += linPresNom.length * 4.5;
-    
     var cliNombre = cliObj ? cliObj.nombre : (p.cli || '');
     if (cliNombre) {
-      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-      var linCliNom = doc.splitTextToSize('Cliente: ' + cliNombre, 85);
-      doc.text(linCliNom, 110, y); y += linCliNom.length * 4;
+      doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
+      var linCliNom = doc.splitTextToSize('Cliente: ' + cliNombre, 80);
+      doc.text(linCliNom, 195, y, { align: 'right' });
+      y += linCliNom.length * 4.5;
     }
     if (cliObj && cliObj.nif) {
       doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-      doc.text('NIF/CIF: ' + cliObj.nif, 110, y); y += 4;
+      doc.text('NIF/CIF: ' + cliObj.nif, 195, y, { align: 'right' });
+      y += 4;
     }
     if (cliObj && cliObj.dir) {
+      var dirLimpia = (cliObj.dir || '').replace(/^(dir|direcci[oó]n)\s*:\s*/i, '').trim();
+      if (dirLimpia) {
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+        var linCliDir = doc.splitTextToSize('Dirección: ' + dirLimpia, 80);
+        doc.text(linCliDir, 195, y, { align: 'right' });
+        y += linCliDir.length * 4;
+      }
+    }
+    if (cliObj && cliObj.tel) {
       doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-      var linCliDir = doc.splitTextToSize('Dir: ' + cliObj.dir, 85);
-      doc.text(linCliDir, 110, y); y += linCliDir.length * 4;
+      doc.text('Tel: ' + cliObj.tel, 195, y, { align: 'right' });
+      y += 4;
+    }
+    if (p.n) {
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+      var linPresNom = doc.splitTextToSize('Presupuesto: ' + p.n, 80);
+      doc.text(linPresNom, 195, y, { align: 'right' });
+      y += linPresNom.length * 4;
     }
 
     var endYCli = y;
-    y = Math.max(endYEmp, endYCli) + 6;
+    y = Math.max(endYLeft, endYCli) + 6;
 
     doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
     doc.line(15, y, 195, y);
