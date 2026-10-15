@@ -1982,8 +1982,8 @@ function generarPDFFactura(idTarget) {
             w = h * ratio;
           }
         }
-        var fmt = (logoProps && logoProps.fileType) ? logoProps.fileType : 'PNG';
-        doc.addImage(emp.logo, fmt, 15, y - 1, w, h, undefined, 'FAST');
+        var imgFmt = (logoProps && logoProps.fileType) ? logoProps.fileType : 'PNG';
+        doc.addImage(emp.logo, imgFmt, 15, y - 1, w, h, undefined, 'FAST');
         empX = 15 + w + 5;
         logoH = h;
       } catch(e) {
@@ -2383,8 +2383,8 @@ function generarPDF(idTarget) {
             w = h * ratio;
           }
         }
-        var fmt = (logoProps && logoProps.fileType) ? logoProps.fileType : 'PNG';
-        doc.addImage(emp.logo, fmt, 15, y - 1, w, h, undefined, 'FAST');
+        var imgFmt = (logoProps && logoProps.fileType) ? logoProps.fileType : 'PNG';
+        doc.addImage(emp.logo, imgFmt, 15, y - 1, w, h, undefined, 'FAST');
         empX = 15 + w + 5;
         logoH = h;
       } catch(e) {
