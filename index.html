@@ -94,6 +94,31 @@ textarea{resize:vertical;min-height:60px}
 .badge-pendiente{background:#fff3e0;color:#e65100}
 .badge-cobrada{background:#e8f5e9;color:#2e7d32}
 .badge-anulada{background:#efebe9;color:#4e342e}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .cab, .fab, .bgrp, .smenu, .mov, #menuOv, #menuPanel, .paginacion, .modal, .toast, #panelLogin, button, input, select, textarea, .pcard {
+    display: none !important;
+  }
+  #avisoImpresionNativa {
+    display: block !important;
+    margin: 40px auto;
+    max-width: 600px;
+    padding: 30px;
+    border: 2px solid #0288D1;
+    border-radius: 8px;
+    text-align: center;
+    font-family: sans-serif;
+  }
+}
+@media screen {
+  #avisoImpresionNativa {
+    display: none !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -200,6 +225,10 @@ textarea{resize:vertical;min-height:60px}
 
   <!-- PANTALLA: Editor de presupuesto -->
   <div id="panelEdit" class="oculto">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; flex-wrap:wrap">
+      <button class="btn baz bsm" id="btnPDFTop" type="button" style="background:#0288D1">&#128196; Ver PDF</button>
+      <button class="btn baz bsm" id="btnGuardarTop" type="button">&#128190; Guardar</button>
+    </div>
 
     <!-- Info empresa -->
     <div id="boxEmpresa" class="card oculto" style="background:var(--az);color:#fff"></div>
@@ -278,9 +307,10 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
     <div class="bgrp">
-      <button class="btn baz" id="btnGuardar" style="flex:1; max-width:180px">&#128190; Guardar</button>
-      <button class="btn baz oculto" id="btnConvertirFactura" style="background:#2E7D32">&#128195; Convertir a Factura</button>
-      <button class="btn bor" id="btnCancelarPresupuesto" style="flex:1; max-width:180px">Cancelar</button>
+      <button class="btn baz" id="btnGuardar" style="flex:1; min-width:130px">&#128190; Guardar</button>
+      <button class="btn baz" id="btnPDF" type="button" style="background:#0288D1; flex:1; min-width:130px">&#128196; Ver PDF</button>
+      <button class="btn baz oculto" id="btnConvertirFactura" style="background:#2E7D32; flex:1; min-width:140px">&#128195; Convertir a Factura</button>
+      <button class="btn bor" id="btnCancelarPresupuesto" style="flex:1; min-width:110px">Cancelar</button>
     </div>
   </div>
 
@@ -296,6 +326,10 @@ textarea{resize:vertical;min-height:60px}
 
   <!-- PANTALLA: Editor de Factura -->
   <div id="panelEditFactura" class="oculto">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; flex-wrap:wrap">
+      <button class="btn baz bsm" id="btnPDFFacturaTop" type="button" style="background:#0288D1">&#128196; Ver PDF</button>
+      <button class="btn baz bsm" id="btnGuardarFacturaTop" type="button">&#128190; Guardar Factura</button>
+    </div>
     <div class="card">
       <div class="r2">
         <div class="grp">
@@ -383,8 +417,9 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
     <div class="bgrp">
-      <button class="btn baz" id="btnGuardarFactura" style="flex:1; max-width:200px">&#128190; Guardar Factura</button>
-      <button class="btn bor" id="btnCancelarFactura" style="flex:1; max-width:200px">Cancelar</button>
+      <button class="btn baz" id="btnGuardarFactura" style="flex:1; min-width:140px">&#128190; Guardar Factura</button>
+      <button class="btn baz" id="btnPDFFactura" type="button" style="background:#0288D1; flex:1; min-width:140px">&#128196; Ver PDF</button>
+      <button class="btn bor" id="btnCancelarFactura" style="flex:1; min-width:110px">Cancelar</button>
     </div>
   </div>
 
@@ -455,6 +490,29 @@ textarea{resize:vertical;min-height:60px}
       <button class="btn baz" id="btnGuardarCliente">Guardar Cliente</button>
     </div>
   </div>
+</div>
+
+<!-- MODAL VISUALIZADOR / ACCIONES PDF (OPTIMIZADO PARA TABLETS Y MÓVILES) -->
+<div id="modalPDF" class="modal oculto">
+  <div class="modal-body" style="text-align:center; max-width:440px">
+    <div style="font-size:42px; margin-bottom:8px">&#128196;</div>
+    <h3 style="margin-bottom:8px">PDF Generado con Éxito</h3>
+    <p id="modalPDFNombre" style="font-weight:bold; color:var(--az); margin-bottom:12px; word-break:break-all"></p>
+    <p style="color:#555; font-size:13px; margin-bottom:18px">Si tu navegador no abrió el documento automáticamente, pulsa una de las siguientes opciones:</p>
+    <div style="display:flex; flex-direction:column; gap:10px">
+      <a id="btnAbrirPDFModal" href="#" target="_blank" class="btn baz" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px">&#128065; Ver / Abrir PDF</a>
+      <a id="btnDescargarPDFModal" href="#" download="" class="btn baz" style="background:#2E7D32; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px">&#128190; Descargar PDF</a>
+      <button type="button" id="btnCompartirPDFModal" class="btn bwa" style="display:none; align-items:center; justify-content:center; gap:8px">&#128241; Compartir PDF (WhatsApp / Imprimir)</button>
+      <button type="button" id="btnCerrarPDFModal" class="btn bor" style="margin-top:6px">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="avisoImpresionNativa">
+  <h2 style="color:#0288D1; margin-bottom:12px">&#128196; Generación de PDF Oficial</h2>
+  <p style="font-size:16px; line-height:1.5; color:#333">
+    Para imprimir o guardar este documento con su formato oficial y desglose legal A4, por favor utiliza el botón <b>"Ver PDF"</b> o <b>"Descargar PDF"</b> dentro de la aplicación.
+  </p>
 </div>
 
 <!-- MENU LATERAL -->
@@ -1886,26 +1944,99 @@ function enviarWhatsAppFactura(idTarget) {
   exportarPDFFactura(targetId);
 }
 
+var blobActualPDF = null;
+var urlActualPDF = null;
+var nombreActualPDF = '';
+
+function mostrarModalPDF(url, nombre, blob) {
+  if (urlActualPDF && urlActualPDF !== url) {
+    try { URL.revokeObjectURL(urlActualPDF); } catch(e) {}
+  }
+  urlActualPDF = url;
+  blobActualPDF = blob;
+  nombreActualPDF = nombre;
+
+  var modal = sg('modalPDF');
+  if (!modal) return;
+
+  var elNombre = sg('modalPDFNombre');
+  if (elNombre) elNombre.textContent = nombre;
+
+  var btnAbrir = sg('btnAbrirPDFModal');
+  if (btnAbrir) {
+    btnAbrir.href = url;
+    btnAbrir.target = '_blank';
+  }
+
+  var btnDescargar = sg('btnDescargarPDFModal');
+  if (btnDescargar) {
+    btnDescargar.href = url;
+    btnDescargar.download = nombre;
+  }
+
+  var btnShare = sg('btnCompartirPDFModal');
+  if (btnShare) {
+    if (navigator.canShare && blob) {
+      btnShare.style.display = 'flex';
+      btnShare.onclick = function() {
+        try {
+          var file = new File([blob], nombre, { type: 'application/pdf' });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: nombre,
+              text: 'Adjunto documento ' + nombre
+            }).catch(function() {});
+          }
+        } catch(ex) {
+          toast('Función compartir no disponible en este navegador');
+        }
+      };
+    } else {
+      btnShare.style.display = 'none';
+    }
+  }
+
+  modal.classList.remove('oculto');
+}
+
+function cerrarModalPDF() {
+  var modal = sg('modalPDF');
+  if (modal) modal.classList.add('oculto');
+}
+
 function descargarPDFDoc(doc, nombreArchivo) {
   try {
-    doc.save(nombreArchivo);
-  } catch(err) {
+    var blob = doc.output('blob');
+    var blobUrl = URL.createObjectURL(blob);
+
+    // 1. Mostrar modal con opciones claras para tablets, móviles y ordenadores
+    mostrarModalPDF(blobUrl, nombreArchivo, blob);
+
+    // 2. Intentar abrir automáticamente en visor nativo de la tablet / navegador
     try {
-      var blob = doc.output('blob');
-      var url = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch(e) {}
+
+    // 3. Forzar descarga de archivo (desktop y fallback)
+    try {
+      doc.save(nombreArchivo);
+    } catch(errSave) {
       var a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       a.download = nombreArchivo;
       document.body.appendChild(a);
       a.click();
       setTimeout(function() {
         if (a.parentNode) a.parentNode.removeChild(a);
-        URL.revokeObjectURL(url);
       }, 1000);
+    }
+  } catch(err) {
+    console.error('Error generando PDF:', err);
+    try {
+      doc.save(nombreArchivo);
     } catch(ex) {
-      try {
-        doc.output('dataurlnewwindow');
-      } catch(e) {}
+      toast('Error al generar PDF: ' + err.message);
     }
   }
 }
@@ -2603,6 +2734,24 @@ function asignarEventos() {
   sg('btnVolver').addEventListener('click', irInicio);
   sg('btnMenu').addEventListener('click', abrirMenu);
 
+  function accionVerPDFPresupuesto() {
+    guardar();
+    if (pid) {
+      exportarPDF(pid);
+    } else {
+      toast('Guarda el presupuesto primero');
+    }
+  }
+
+  function accionVerPDFFactura() {
+    guardarFactura();
+    if (fid) {
+      exportarPDFFactura(fid);
+    } else {
+      toast('Guarda la factura primero');
+    }
+  }
+
   sg('btnGuardar').addEventListener('click', function() {
     guardar();
     var savedId = pid;
@@ -2612,6 +2761,23 @@ function asignarEventos() {
     irPresupuestosLista();
   });
 
+  var bGTop = sg('btnGuardarTop');
+  if (bGTop) {
+    bGTop.addEventListener('click', function() {
+      guardar();
+      var savedId = pid;
+      if (savedId) {
+        exportarPDF(savedId);
+      }
+      irPresupuestosLista();
+    });
+  }
+
+  var bPDF = sg('btnPDF');
+  if (bPDF) bPDF.addEventListener('click', accionVerPDFPresupuesto);
+  var bPDFTop = sg('btnPDFTop');
+  if (bPDFTop) bPDFTop.addEventListener('click', accionVerPDFPresupuesto);
+
   var bCanc = sg('btnCancelarPresupuesto');
   if (bCanc) {
     bCanc.addEventListener('click', function() {
@@ -2619,7 +2785,6 @@ function asignarEventos() {
     });
   }
 
-  var bPDF = sg('btnPDF'); if (bPDF) bPDF.addEventListener('click', function() { exportarPDF(); });
   var bWA = sg('btnWhatsApp'); if (bWA) bWA.addEventListener('click', function() { enviarWhatsAppPresupuesto(); });
   var bCF = sg('btnConvertirFactura'); if (bCF) bCF.addEventListener('click', function() { convertirPresupuestoAFactura(); });
   var bPl = sg('btnPlantilla'); if (bPl) bPl.addEventListener('click', guardarPlantilla);
@@ -2634,6 +2799,23 @@ function asignarEventos() {
     irFacturas();
   });
 
+  var bGFactTop = sg('btnGuardarFacturaTop');
+  if (bGFactTop) {
+    bGFactTop.addEventListener('click', function() {
+      guardarFactura();
+      var savedFid = fid;
+      if (savedFid) {
+        exportarPDFFactura(savedFid);
+      }
+      irFacturas();
+    });
+  }
+
+  var bPDFFact = sg('btnPDFFactura');
+  if (bPDFFact) bPDFFact.addEventListener('click', accionVerPDFFactura);
+  var bPDFFactTop = sg('btnPDFFacturaTop');
+  if (bPDFFactTop) bPDFFactTop.addEventListener('click', accionVerPDFFactura);
+
   var bCFact = sg('btnCancelarFactura');
   if (bCFact) {
     bCFact.addEventListener('click', function() {
@@ -2641,9 +2823,27 @@ function asignarEventos() {
     });
   }
 
-  var bPDFFact = sg('btnPDFFactura'); if (bPDFFact) bPDFFact.addEventListener('click', function() { exportarPDFFactura(); });
   var bWAFact = sg('btnWAFactura'); if (bWAFact) bWAFact.addEventListener('click', function() { enviarWhatsAppFactura(); });
   var bBFact = sg('btnBorrarFactura'); if (bBFact) bBFact.addEventListener('click', borrarFactura);
+
+  var bCerrarModalPDF = sg('btnCerrarPDFModal');
+  if (bCerrarModalPDF) bCerrarModalPDF.addEventListener('click', cerrarModalPDF);
+  var modalPDFEl = sg('modalPDF');
+  if (modalPDFEl) {
+    modalPDFEl.addEventListener('click', function(e) {
+      if (e.target === modalPDFEl) cerrarModalPDF();
+    });
+  }
+
+  window.addEventListener('beforeprint', function() {
+    if (sg('panelEdit') && !sg('panelEdit').classList.contains('oculto')) {
+      guardar();
+      if (pid) exportarPDF(pid);
+    } else if (sg('panelEditFactura') && !sg('panelEditFactura').classList.contains('oculto')) {
+      guardarFactura();
+      if (fid) exportarPDFFactura(fid);
+    }
+  });
 
   sg('fDtoPct').addEventListener('input', manejarDtoPctPresupuesto);
   sg('fDtoImp').addEventListener('input', manejarDtoImpPresupuesto);
