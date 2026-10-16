@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gestión de Reformas & Facturas</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -100,7 +101,7 @@ textarea{resize:vertical;min-height:60px}
     background: #fff !important;
     color: #000 !important;
   }
-  .cab, .fab, .bgrp, .smenu, .mov, #menuOv, #menuPanel, .paginacion, .modal, .toast, #panelLogin, button, input, select, textarea, .pcard {
+  .cab, .fab, .bgrp, .smenu, .mov, #menuOv, #menuPanel, .paginacion, .toast, #panelLogin, button, input, select, textarea, .pcard {
     display: none !important;
   }
   #avisoImpresionNativa {
@@ -112,6 +113,36 @@ textarea{resize:vertical;min-height:60px}
     border-radius: 8px;
     text-align: center;
     font-family: sans-serif;
+  }
+  #modalPDF:not(.oculto) {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  #modalPDF:not(.oculto) ~ #avisoImpresionNativa {
+    display: none !important;
+  }
+  #modalPDF:not(.oculto) .modal-body {
+    max-width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  #modalPDF:not(.oculto) .modal-body > div:first-child {
+    display: none !important;
+  }
+  #pdfCanvasContainer {
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  #pdfCanvasContainer canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-after: always;
+    box-shadow: none !important;
   }
 }
 @media screen {
@@ -492,19 +523,29 @@ textarea{resize:vertical;min-height:60px}
   </div>
 </div>
 
-<!-- MODAL VISUALIZADOR / ACCIONES PDF (OPTIMIZADO PARA TABLETS Y MÓVILES) -->
-<div id="modalPDF" class="modal oculto">
-  <div class="modal-body" style="text-align:center; max-width:440px">
-    <div style="font-size:42px; margin-bottom:8px">&#128196;</div>
-    <h3 style="margin-bottom:8px">PDF Generado con Éxito</h3>
-    <p id="modalPDFNombre" style="font-weight:bold; color:var(--az); margin-bottom:12px; word-break:break-all"></p>
-    <p style="color:#555; font-size:13px; margin-bottom:18px">Si tu navegador no abrió el documento automáticamente, pulsa una de las siguientes opciones:</p>
-    <div style="display:flex; flex-direction:column; gap:10px">
-      <a id="btnAbrirPDFModal" href="#" target="_blank" class="btn baz" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px">&#128065; Ver / Abrir PDF</a>
-      <a id="btnDescargarPDFModal" href="#" download="" class="btn baz" style="background:#2E7D32; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px">&#128190; Descargar PDF</a>
-      <button type="button" id="btnCompartirPDFModal" class="btn bwa" style="display:none; align-items:center; justify-content:center; gap:8px">&#128241; Compartir PDF (WhatsApp / Imprimir)</button>
-      <button type="button" id="btnCerrarPDFModal" class="btn bor" style="margin-top:6px">Cerrar</button>
+<!-- MODAL VISUALIZADOR DE PDF COMPLETO (COMPATIBLE CON TABLETS, MÓVILES Y PC) -->
+<div id="modalPDF" class="modal oculto" style="z-index:9999; padding:8px">
+  <div class="modal-body" style="width:100%; max-width:850px; max-height:95vh; display:flex; flex-direction:column; padding:12px; background:#f4f6f9">
+    
+    <!-- Barra superior de acciones del visor -->
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; border-bottom:1px solid #ddd; padding-bottom:8px">
+      <div style="display:flex; align-items:center; gap:8px">
+        <span style="font-size:24px">&#128196;</span>
+        <strong id="modalPDFNombre" style="color:var(--az); font-size:14px; word-break:break-all"></strong>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+        <button type="button" id="btnCompartirPDFModal" class="btn bwa bsm" style="display:none; align-items:center; gap:4px">&#128241; Abrir / Compartir</button>
+        <a id="btnDescargarPDFModal" href="#" download="" class="btn baz bsm" style="background:#2E7D32; text-decoration:none; display:inline-flex; align-items:center; gap:4px">&#128190; Descargar PDF</a>
+        <button type="button" id="btnImprimirPDFModal" class="btn baz bsm" style="background:#0288D1; display:inline-flex; align-items:center; gap:4px">&#128424; Imprimir</button>
+        <button type="button" id="btnCerrarPDFModal" class="btn bor bsm" style="font-weight:bold">&#215; Cerrar</button>
+      </div>
     </div>
+
+    <!-- Contenedor del documento PDF renderizado en Canvas -->
+    <div id="pdfCanvasContainer" style="flex:1; overflow-y:auto; overflow-x:auto; text-align:center; padding:10px 0; background:#78909c; border-radius:6px; min-height:300px">
+      <!-- Lienzos de las páginas del PDF -->
+    </div>
+
   </div>
 </div>
 
@@ -1947,26 +1988,94 @@ function enviarWhatsAppFactura(idTarget) {
 var blobActualPDF = null;
 var urlActualPDF = null;
 var nombreActualPDF = '';
+var arrayBufferActualPDF = null;
 
-function mostrarModalPDF(url, nombre, blob) {
+function renderizarPDFEnCanvas(pdfData) {
+  var contenedor = sg('pdfCanvasContainer');
+  if (!contenedor) return;
+  contenedor.innerHTML = '<div style="padding:40px;color:#fff;font-size:15px">&#9203; Generando vista previa del documento...</div>';
+
+  if (!window.pdfjsLib) {
+    contenedor.innerHTML = '<div style="padding:30px;color:#fff;font-size:15px">&#128196; <b>PDF generado con éxito</b><br><br>Pulsa <b>Descargar PDF</b> para guardarlo o <b>Abrir / Compartir</b> para verlo con tu app de PDF habitual.</div>';
+    return;
+  }
+
+  try {
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+  } catch(e) {}
+
+  var loadingTask = pdfjsLib.getDocument({ data: pdfData });
+  loadingTask.promise.then(function(pdf) {
+    contenedor.innerHTML = '';
+    var numPages = pdf.numPages;
+
+    function renderPage(pageNum) {
+      if (pageNum > numPages) return;
+      pdf.getPage(pageNum).then(function(page) {
+        var contenedorAncho = contenedor.clientWidth || window.innerWidth;
+        var anchoDeseado = Math.min(contenedorAncho - 32, 750);
+        if (anchoDeseado < 280) anchoDeseado = 280;
+
+        var unscaledViewport = page.getViewport({ scale: 1 });
+        var escala = anchoDeseado / unscaledViewport.width;
+        var pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        var viewport = page.getViewport({ scale: escala });
+
+        var canvasWrapper = document.createElement('div');
+        canvasWrapper.style.margin = '0 auto 16px auto';
+        canvasWrapper.style.boxShadow = '0 4px 14px rgba(0,0,0,0.3)';
+        canvasWrapper.style.borderRadius = '4px';
+        canvasWrapper.style.overflow = 'hidden';
+        canvasWrapper.style.background = '#fff';
+        canvasWrapper.style.maxWidth = '100%';
+        canvasWrapper.style.width = viewport.width + 'px';
+
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width * pixelRatio);
+        canvas.height = Math.floor(viewport.height * pixelRatio);
+        canvas.style.display = 'block';
+        canvas.style.width = viewport.width + 'px';
+        canvas.style.height = viewport.height + 'px';
+
+        var ctx = canvas.getContext('2d');
+        ctx.scale(pixelRatio, pixelRatio);
+
+        canvasWrapper.appendChild(canvas);
+        contenedor.appendChild(canvasWrapper);
+
+        var renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        page.render(renderContext).promise.then(function() {
+          renderPage(pageNum + 1);
+        });
+      });
+    }
+
+    renderPage(1);
+  }).catch(function(err) {
+    console.error('Error renderizando PDF en canvas:', err);
+    contenedor.innerHTML = '<div style="padding:30px;color:#fff;font-size:15px">&#128196; <b>PDF generado con éxito</b><br><br>Pulsa <b>Descargar PDF</b> para guardarlo o <b>Abrir / Compartir</b> para verlo con tu app de PDF habitual.</div>';
+  });
+}
+
+function mostrarModalPDF(url, nombre, blob, arrayBuffer) {
   if (urlActualPDF && urlActualPDF !== url) {
     try { URL.revokeObjectURL(urlActualPDF); } catch(e) {}
   }
   urlActualPDF = url;
   blobActualPDF = blob;
   nombreActualPDF = nombre;
+  arrayBufferActualPDF = arrayBuffer;
 
   var modal = sg('modalPDF');
   if (!modal) return;
 
   var elNombre = sg('modalPDFNombre');
   if (elNombre) elNombre.textContent = nombre;
-
-  var btnAbrir = sg('btnAbrirPDFModal');
-  if (btnAbrir) {
-    btnAbrir.href = url;
-    btnAbrir.target = '_blank';
-  }
 
   var btnDescargar = sg('btnDescargarPDFModal');
   if (btnDescargar) {
@@ -1977,7 +2086,7 @@ function mostrarModalPDF(url, nombre, blob) {
   var btnShare = sg('btnCompartirPDFModal');
   if (btnShare) {
     if (navigator.canShare && blob) {
-      btnShare.style.display = 'flex';
+      btnShare.style.display = 'inline-flex';
       btnShare.onclick = function() {
         try {
           var file = new File([blob], nombre, { type: 'application/pdf' });
@@ -1997,28 +2106,27 @@ function mostrarModalPDF(url, nombre, blob) {
     }
   }
 
+  renderizarPDFEnCanvas(arrayBuffer);
   modal.classList.remove('oculto');
 }
 
 function cerrarModalPDF() {
   var modal = sg('modalPDF');
   if (modal) modal.classList.add('oculto');
+  var contenedor = sg('pdfCanvasContainer');
+  if (contenedor) contenedor.innerHTML = '';
 }
 
 function descargarPDFDoc(doc, nombreArchivo) {
   try {
-    var blob = doc.output('blob');
+    var arrayBuffer = doc.output('arraybuffer');
+    var blob = new Blob([arrayBuffer], { type: 'application/pdf' });
     var blobUrl = URL.createObjectURL(blob);
 
-    // 1. Mostrar modal con opciones claras para tablets, móviles y ordenadores
-    mostrarModalPDF(blobUrl, nombreArchivo, blob);
+    // 1. Mostrar visor interactivo con previsualización dentro de la app (NUNCA abre pestaña en blanco)
+    mostrarModalPDF(blobUrl, nombreArchivo, blob, arrayBuffer);
 
-    // 2. Intentar abrir automáticamente en visor nativo de la tablet / navegador
-    try {
-      window.open(blobUrl, '_blank');
-    } catch(e) {}
-
-    // 3. Forzar descarga de archivo (desktop y fallback)
+    // 2. Descargar el archivo directamente en segundo plano
     try {
       doc.save(nombreArchivo);
     } catch(errSave) {
@@ -2828,6 +2936,12 @@ function asignarEventos() {
 
   var bCerrarModalPDF = sg('btnCerrarPDFModal');
   if (bCerrarModalPDF) bCerrarModalPDF.addEventListener('click', cerrarModalPDF);
+  var bImpPDFModal = sg('btnImprimirPDFModal');
+  if (bImpPDFModal) {
+    bImpPDFModal.addEventListener('click', function() {
+      window.print();
+    });
+  }
   var modalPDFEl = sg('modalPDF');
   if (modalPDFEl) {
     modalPDFEl.addEventListener('click', function(e) {
