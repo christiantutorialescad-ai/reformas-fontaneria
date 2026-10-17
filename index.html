@@ -1435,6 +1435,9 @@ function enviarWhatsAppPresupuesto(idTarget) {
 }
 
 function convertirPresupuestoAFactura(idTarget) {
+  if (!idTarget && sg('panelEdit') && !sg('panelEdit').classList.contains('oculto')) {
+    guardar();
+  }
   var targetId = idTarget || pid;
   if (!targetId) { toast('Guarda el presupuesto primero'); return; }
   var p = null;
@@ -1467,6 +1470,24 @@ function convertirPresupuestoAFactura(idTarget) {
   dVenc.setDate(dVenc.getDate() + 30);
   var fechaVenc = dVenc.toISOString().slice(0, 10);
 
+  // Instrucciones de cobro / pago para la factura
+  var notaPago = '';
+  if (M.empresa.iban) notaPago += 'IBAN: ' + M.empresa.iban + '\n';
+  if (M.empresa.bizum) notaPago += 'Bizum: ' + M.empresa.bizum + '\n';
+  var notasFact = notaPago.trim();
+
+  // Si el presupuesto tenía notas particulares (limpiando cualquier texto que diga "presupuesto"):
+  if (p.nt) {
+    var ntSinPresup = p.nt
+      .replace(/factura procedente de presupuesto:?\s*/gi, '')
+      .replace(/validez del presupuesto:?\s*[^\n\.]*[\n\.]?/gi, '')
+      .replace(/presupuesto:?\s*/gi, '')
+      .trim();
+    if (ntSinPresup && ntSinPresup.toLowerCase() !== 'presupuesto') {
+      notasFact += (notasFact ? '\n' : '') + ntSinPresup;
+    }
+  }
+
   var nuevaFact = {
     id: Date.now(),
     num: numStr,
@@ -1481,7 +1502,7 @@ function convertirPresupuestoAFactura(idTarget) {
     dv: p.dv || 0,
     dtoPct: p.dtoPct != null ? p.dtoPct : (p.dt === 'percent' ? p.dv : 0),
     dtoImp: p.dtoImp != null ? p.dtoImp : (p.dt === 'fixed' ? p.dv : 0),
-    nt: p.nt || ('Factura procedente de presupuesto: ' + (p.n || '')),
+    nt: notasFact,
     t: p.t || 0,
     items: factItemsSnap
   };
@@ -1659,8 +1680,10 @@ function abrirFactura(id) {
   sg('fFactFormaPago').value = fObj.formaPago || 'Transferencia Bancaria';
   sg('fFactIvaDefecto').value = ivaFact;
   sg('fFactFecha').value = fObj.f || '';
-  sg('fFactVenc').value = fObj.fVenc || '';
-  sg('fFactNotas').value = fObj.nt || '';
+  var notasLimpias = (fObj.nt || '')
+    .replace(/factura procedente de presupuesto:?\s*(presupuesto)?/gi, '')
+    .trim();
+  sg('fFactNotas').value = notasLimpias;
   var subF = 0;
   for (var k = 0; k < factItems.length; k++) { subF += (factItems[k].pu || 0); }
   if (fObj.dt === 'percent') {
@@ -2410,11 +2433,16 @@ function generarPDFFactura(idTarget) {
 
     // Notas e Instrucciones de Pago
     if (fObj.nt) {
-      var linNotas = doc.splitTextToSize('Notas / Datos Pago: ' + fObj.nt, 180);
-      var altoNotas = linNotas.length * 4 + 8;
-      if (y + altoNotas > 270) { doc.addPage(); y = 20; } else { y += 10; }
-      doc.setFontSize(8.5); doc.setFont('helvetica', 'italic');
-      doc.text(linNotas, 15, y);
+      var ntLimpia = fObj.nt
+        .replace(/factura procedente de presupuesto:?\s*(presupuesto)?/gi, '')
+        .trim();
+      if (ntLimpia) {
+        var linNotas = doc.splitTextToSize('Notas / Datos Pago: ' + ntLimpia, 180);
+        var altoNotas = linNotas.length * 4 + 8;
+        if (y + altoNotas > 270) { doc.addPage(); y = 20; } else { y += 10; }
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'italic');
+        doc.text(linNotas, 15, y);
+      }
     }
 
     descargarPDFDoc(doc, 'Factura_' + (fObj.num || 'sin_numero').replace(/[^a-z0-9]/gi, '_') + '.pdf');
@@ -2670,7 +2698,7 @@ function generarPDF(idTarget) {
     var cliNombre = cliObj ? cliObj.nombre : (p.cli || '');
     if (cliNombre) {
       doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
-      var linCliNom = doc.splitTextToSize('Cliente: ' + cliNombre, 80);
+      var linCliNom = doc.splitTextToSize(cliNombre, 80);
       doc.text(linCliNom, 195, y, { align: 'right' });
       y += linCliNom.length * 4.5;
     }
@@ -2694,10 +2722,13 @@ function generarPDF(idTarget) {
       y += 4;
     }
     if (p.n) {
-      doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
-      var linPresNom = doc.splitTextToSize('Presupuesto: ' + p.n, 80);
-      doc.text(linPresNom, 195, y, { align: 'right' });
-      y += linPresNom.length * 4;
+      var nomLimpio = p.n.replace(/^presupuesto\s*[:\-]?\s*/i, '').trim();
+      if (nomLimpio && nomLimpio.toLowerCase() !== 'presupuesto') {
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        var linPresNom = doc.splitTextToSize('Concepto / Obra: ' + nomLimpio, 80);
+        doc.text(linPresNom, 195, y, { align: 'right' });
+        y += linPresNom.length * 4;
+      }
     }
 
     var endYCli = y;
